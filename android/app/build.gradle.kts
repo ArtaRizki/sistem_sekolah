@@ -24,7 +24,7 @@ android {
         applicationId = "com.artarizki.sistem_sekolah"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 21
+        minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -51,4 +51,7 @@ dependencies {
     implementation("com.google.mlkit:face-detection:16.1.5")
     implementation("com.google.android.gms:play-services-tflite-java:16.0.1")
     implementation("com.google.android.gms:play-services-tflite-support:16.0.1")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("com.google.guava:guava:31.1-android")
 }
