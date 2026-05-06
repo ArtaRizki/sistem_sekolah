@@ -1,0 +1,158 @@
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Menu Toggle
+    document.getElementById("menu-toggle").addEventListener("click", function (e) {
+      e.preventDefault();
+      document.getElementById("wrapper").classList.toggle("toggled");
+    });
+
+    // Navigation
+    const links = document.querySelectorAll("#sidebar-wrapper .list-group-item");
+    const sections = document.querySelectorAll(".content-section");
+
+    links.forEach(link => {
+      link.addEventListener("click", function (e) {
+        e.preventDefault();
+        
+        // Update active class
+        links.forEach(l => l.classList.remove("active"));
+        this.classList.add("active");
+
+        // Update title
+        document.getElementById("page-title").innerText = this.innerText.trim();
+
+        // Show section
+        const targetId = this.getAttribute("data-target");
+        sections.forEach(sec => sec.classList.add("d-none"));
+        document.getElementById(targetId).classList.remove("d-none");
+
+        // Load data if needed
+        if (targetId === 'dashboard') loadDashboard();
+        if (targetId === 'guru') loadGuru();
+        if (targetId === 'siswa') loadSiswa();
+        if (targetId === 'nilai') loadNilai();
+        if (targetId === 'rekap') loadRekap();
+      });
+    });
+
+    // Initial load
+    loadDashboard();
+  });
+
+  // --- Data Loading Functions ---
+
+  function loadDashboard() {
+    google.script.run.withSuccessHandler(function(data) {
+      document.getElementById('dash-nama').innerText = data.sekolah;
+      document.getElementById('dash-alamat').innerText = data.alamat;
+      document.getElementById('dash-siswa').innerText = data.totalSiswa;
+      document.getElementById('dash-guru').innerText = data.totalGuru;
+      document.getElementById('dash-kelas').innerText = data.totalKelas;
+    }).getDashboardData();
+  }
+
+  function loadGuru() {
+    google.script.run.withSuccessHandler(function(data) {
+      let html = '';
+      data.forEach((g, i) => {
+        html += `<tr>
+          <td>${i+1}</td>
+          <td class="fw-bold">${g.nama}</td>
+          <td>${g.nip}</td>
+          <td><span class="badge bg-primary">${g.mapel}</span></td>
+        </tr>`;
+      });
+      document.getElementById('guru-table-body').innerHTML = html || '<tr><td colspan="4" class="text-center">Tidak ada data</td></tr>';
+    }).getGuruData();
+  }
+
+  function loadSiswa() {
+    const kelas = document.getElementById('select-kelas').value;
+    document.getElementById('siswa-table-body').innerHTML = '<tr><td colspan="4" class="text-center">Loading...</td></tr>';
+    
+    google.script.run.withSuccessHandler(function(data) {
+      let html = '';
+      data.forEach((s, i) => {
+        let jkBadge = s.jk === 'L' ? '<span class="badge bg-info">Laki-Laki</span>' : '<span class="badge bg-pink" style="background-color: hotpink;">Perempuan</span>';
+        html += `<tr>
+          <td>${i+1}</td>
+          <td class="fw-bold">${s.nama}</td>
+          <td>${s.nis}</td>
+          <td>${jkBadge}</td>
+        </tr>`;
+      });
+      document.getElementById('siswa-table-body').innerHTML = html || '<tr><td colspan="4" class="text-center">Tidak ada data</td></tr>';
+    }).getSiswaData(kelas);
+  }
+
+  function loadNilai() {
+    const mapel = document.getElementById('select-mapel').value;
+    document.getElementById('lbl-mapel').innerText = mapel;
+    document.getElementById('nilai-table-body').innerHTML = '<tr><td colspan="6" class="text-center">Loading...</td></tr>';
+    
+    google.script.run.withSuccessHandler(function(data) {
+      let html = '';
+      data.forEach((n, i) => {
+        let rata = ((n.tugas1 + n.tugas2 + n.uh) / 3).toFixed(2);
+        html += `<tr>
+          <td>${i+1}</td>
+          <td class="text-start fw-bold">${n.nama}</td>
+          <td>${n.tugas1}</td>
+          <td>${n.tugas2}</td>
+          <td>${n.uh}</td>
+          <td class="fw-bold text-success">${rata}</td>
+        </tr>`;
+      });
+      document.getElementById('nilai-table-body').innerHTML = html || '<tr><td colspan="6" class="text-center">Tidak ada data</td></tr>';
+    }).getNilaiData(mapel);
+  }
+
+  function loadRekap() {
+    const bulan = document.getElementById('select-bulan').value;
+    document.getElementById('lbl-bulan').innerText = bulan;
+    document.getElementById('rekap-table-body').innerHTML = '<tr><td colspan="6" class="text-center">Loading...</td></tr>';
+    
+    google.script.run.withSuccessHandler(function(data) {
+      let html = '';
+      data.forEach((r, i) => {
+        html += `<tr>
+          <td>${i+1}</td>
+          <td class="fw-bold">${r.kelas}</td>
+          <td class="text-success fw-bold">${r.hadir}%</td>
+          <td class="text-primary">${r.izin}%</td>
+          <td class="text-warning">${r.sakit}%</td>
+          <td class="text-danger fw-bold">${r.alpa}%</td>
+        </tr>`;
+      });
+      document.getElementById('rekap-table-body').innerHTML = html || '<tr><td colspan="6" class="text-center">Tidak ada data</td></tr>';
+    }).getRekapData(bulan);
+  }
+
+  // --- PDF Generation ---
+  function downloadPDF(elementId, filename) {
+    const element = document.getElementById(elementId);
+    
+    // Show print headers for PDF
+    const printHeaders = element.querySelectorAll('.print-header');
+    printHeaders.forEach(el => el.classList.remove('d-none'));
+    
+    // Set current date for Rekap
+    if(document.getElementById('lbl-tanggal')) {
+      let date = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+      document.getElementById('lbl-tanggal').innerText = date;
+    }
+
+    const opt = {
+      margin:       10,
+      filename:     filename,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2 },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().set(opt).from(element).save().then(() => {
+      // Hide print headers back after generation
+      printHeaders.forEach(el => el.classList.add('d-none'));
+    });
+  }
+</script>
