@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  // GANTI DENGAN URL DEPLOYMENT GOOGLE APPS SCRIPT ANDA
-  static const String baseUrl = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
+  // URL DEPLOYMENT GOOGLE APPS SCRIPT USER
+  static const String baseUrl = 'https://script.google.com/macros/s/AKfycbwBN4DkmIy4slzlFd703utieZl1RGh8jhrEOkxZ4JbMvnEfH6hp-keA9MApQSahWidZoQ/exec';
 
   Future<Map<String, dynamic>> getDashboard() async {
     final response = await http.get(Uri.parse('$baseUrl?action=getDashboard'));

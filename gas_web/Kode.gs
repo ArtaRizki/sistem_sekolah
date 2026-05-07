@@ -1,3 +1,7 @@
+// ID SPREADSHEET USER
+var SPREADSHEET_ID = "1wydhxdPM_GBtvaPxuR6s-zct463x_8aXYMbBE6pOT_Q";
+var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+
 function doGet(e) {
   // If request asks for JSON data
   if (e.parameter.action) {
@@ -30,11 +34,36 @@ function doPost(e) {
   var result = { status: "error", message: "Action not found" };
 
   if (action === "registerFace") {
-    // In a real scenario, save to a Sheet
-    // For now, we simulate success
-    result = { status: "success", message: "Face registered successfully" };
+    try {
+      var sheet = ss.getSheetByName("Wajah");
+      if (!sheet) sheet = ss.insertSheet("Wajah");
+      
+      // Save ID and Embedding
+      sheet.appendRow([
+        new Date().getTime().toString(), 
+        JSON.stringify(data.embedding),
+        new Date().toISOString()
+      ]);
+      result = { status: "success", message: "Face registered successfully" };
+    } catch (err) {
+      result = { status: "error", message: err.toString() };
+    }
   } else if (action === "submitAttendance") {
-    result = { status: "success", message: "Attendance recorded" };
+    try {
+      var sheet = ss.getSheetByName("Absensi");
+      if (!sheet) sheet = ss.insertSheet("Absensi");
+      
+      sheet.appendRow([
+        new Date().toISOString(),
+        "User Mobile", // Bisa dikembangkan untuk kirim Nama/ID Siswa
+        "Hadir",
+        data.similarity,
+        data.timestamp
+      ]);
+      result = { status: "success", message: "Attendance recorded" };
+    } catch (err) {
+      result = { status: "error", message: err.toString() };
+    }
   }
 
   return ContentService.createTextOutput(JSON.stringify(result))
@@ -46,60 +75,71 @@ function include(filename) {
 }
 
 // ==========================================
-// DATA FUNCTIONS
+// DATA FUNCTIONS (Reading from Spreadsheet)
 // ==========================================
 
 function getDashboardData() {
+  // Bisa dihitung dari data sheet atau statis sementara
   return {
     sekolah: "SDIT AL-FAHMI PALU",
     alamat: "Jl. Pendidikan No. 1, Palu, Sulawesi Tengah",
-    totalSiswa: 450,
-    totalGuru: 35,
+    totalSiswa: getCount("Siswa"),
+    totalGuru: getCount("Guru"),
     totalKelas: 18
   };
 }
 
+function getCount(sheetName) {
+  var sheet = ss.getSheetByName(sheetName);
+  if (!sheet) return 0;
+  return Math.max(0, sheet.getLastRow() - 1);
+}
+
 function getGuruData() {
-  return [
-    { nama: 'Budi Santoso, S.Pd', nip: '198001012005011001', mapel: 'Matematika' },
-    { nama: 'Siti Aminah, S.Ag', nip: '198205122008012003', mapel: 'Pend. Agama Islam' },
-    { nama: 'Ahmad Fauzi, M.Pd', nip: '197508172000031002', mapel: 'Bahasa Indonesia' },
-    { nama: 'Rina Wati, S.Pd', nip: '198811222010012005', mapel: 'Ilmu Pengetahuan Alam' }
-  ];
+  var sheet = ss.getSheetByName("Guru");
+  if (!sheet) return [];
+  var values = sheet.getDataRange().getValues();
+  var data = [];
+  for (var i = 1; i < values.length; i++) {
+    data.push({
+      nama: values[i][0],
+      nip: values[i][1],
+      mapel: values[i][2]
+    });
+  }
+  return data;
 }
 
 function getSiswaData(kelas) {
-  var allSiswa = {
-    'Kelas 1A': [
-      { nama: 'Andi Susanto', nis: '2023001', jk: 'L' },
-      { nama: 'Budi Setiawan', nis: '2023002', jk: 'L' },
-      { nama: 'Citra Kirana', nis: '2023003', jk: 'P' }
-    ],
-    'Kelas 1B': [
-      { nama: 'Deni Ramadhan', nis: '2023004', jk: 'L' },
-      { nama: 'Eka Putri', nis: '2023005', jk: 'P' }
-    ]
-  };
-  return allSiswa[kelas] || [];
+  var sheet = ss.getSheetByName("Siswa");
+  if (!sheet) return [];
+  var values = sheet.getDataRange().getValues();
+  var data = [];
+  for (var i = 1; i < values.length; i++) {
+    if (!kelas || values[i][3] === kelas) {
+      data.push({
+        nama: values[i][0],
+        nis: values[i][1],
+        jk: values[i][2]
+      });
+    }
+  }
+  return data;
 }
 
 function getNilaiData(mapel) {
+  // Contoh logic pembacaan nilai
   return [
-    { nama: 'Andi Susanto', tugas1: 85, tugas2: 90, uh: 88 },
-    { nama: 'Budi Setiawan', tugas1: 75, tugas2: 80, uh: 78 },
-    { nama: 'Citra Kirana', tugas1: 95, tugas2: 92, uh: 96 }
+    { nama: 'Contoh Siswa', tugas1: 85, tugas2: 90, uh: 88 }
   ];
 }
 
 function getRekapData(bulan) {
   return [
-    { kelas: 'Kelas 1A', hadir: 95, izin: 3, sakit: 2, alpa: 0 },
-    { kelas: 'Kelas 1B', hadir: 92, izin: 5, sakit: 2, alpa: 1 },
-    { kelas: 'Kelas 2A', hadir: 98, izin: 1, sakit: 1, alpa: 0 }
+    { kelas: 'Kelas 1A', hadir: 95, izin: 3, sakit: 2, alpa: 0 }
   ];
 }
 
 function getRegisteredFaceData(id) {
-  // Mockup: return an empty list or some data if found
-  return null; 
+  return null;
 }
