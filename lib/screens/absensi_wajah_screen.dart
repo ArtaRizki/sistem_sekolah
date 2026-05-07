@@ -8,16 +8,28 @@ class AbsensiWajahScreen extends StatefulWidget {
   State<AbsensiWajahScreen> createState() => _AbsensiWajahScreenState();
 }
 
-class _AbsensiWajahScreenState extends State<AbsensiWajahScreen> {
+class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
+    with SingleTickerProviderStateMixin {
   final FaceService _faceService = FaceService();
   bool _isInitializing = true;
   bool _isProcessing = false;
   String _status = "Siap";
+  late AnimationController _animationController;
 
   @override
   void initState() {
     super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    )..repeat();
     _initService();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   Future<void> _initService() async {
@@ -25,6 +37,9 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen> {
       await _faceService.init();
     } catch (e) {
       debugPrint("Init error: $e");
+      if (mounted) {
+        _showErrorSnackBar("Gagal menginisialisasi sistem wajah: $e");
+      }
     } finally {
       if (mounted) {
         setState(() => _isInitializing = false);
@@ -37,7 +52,7 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen> {
       _isProcessing = true;
       _status = "Membuka Kamera...";
     });
-    
+
     try {
       final path = await _faceService.captureFace();
       if (path != null) {
@@ -45,11 +60,13 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen> {
         final embedding = await _faceService.getEmbedding(path);
         if (embedding != null) {
           await _faceService.saveRegisteredFace(embedding);
-          _showSnackBar("Wajah berhasil didaftarkan!", Colors.green);
+          _showSuccessDialog("Wajah Berhasil Didaftarkan!",
+              "Wajah Anda telah tersimpan dan siap untuk verifikasi.",
+              Icons.check_circle_rounded);
         }
       }
     } catch (e) {
-      _showSnackBar("Gagal daftar wajah: $e", Colors.red);
+      _showErrorSnackBar("Gagal daftar wajah: $e");
     } finally {
       setState(() {
         _isProcessing = false;
@@ -61,7 +78,8 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen> {
   Future<void> _verifyAttendance() async {
     final registered = await _faceService.getRegisteredFace();
     if (registered == null) {
-      _showSnackBar("Silakan daftar wajah terlebih dahulu!", Colors.orange);
+      _showErrorSnackBar(
+          "Silakan daftar wajah terlebih dahulu!");
       return;
     }
 
@@ -76,18 +94,26 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen> {
         setState(() => _status = "Memverifikasi...");
         final embedding = await _faceService.getEmbedding(path);
         if (embedding != null) {
-          final similarity = _faceService.calculateSimilarity(registered, embedding);
+          final similarity =
+              _faceService.calculateSimilarity(registered, embedding);
           debugPrint("Similarity: $similarity");
-          
+
           if (similarity > 0.75) {
-            _showSuccessDialog();
+            // Kirim data ke backend GAS
+            _faceService.syncAttendance(embedding, similarity);
+
+            _showSuccessDialog(
+                "Absensi Berhasil!",
+                "Kehadiran Anda telah tercatat dengan persentase kecocokan ${(similarity * 100).toStringAsFixed(1)}%",
+                Icons.face_rounded);
           } else {
-            _showSnackBar("Wajah tidak cocok! (Score: ${(similarity * 100).toStringAsFixed(1)}%)", Colors.red);
+            _showErrorSnackBar(
+                "Wajah tidak cocok! (Score: ${(similarity * 100).toStringAsFixed(1)}%)");
           }
         }
       }
     } catch (e) {
-      _showSnackBar("Gagal verifikasi: $e", Colors.red);
+      _showErrorSnackBar("Gagal verifikasi: $e");
     } finally {
       setState(() {
         _isProcessing = false;
@@ -96,27 +122,87 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen> {
     }
   }
 
-  void _showSnackBar(String msg, Color color) {
+  void _showErrorSnackBar(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: color),
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.error_outline_rounded,
+                color: Colors.white, size: 20),
+            const SizedBox(width: 12),
+            Expanded(child: Text(msg)),
+          ],
+        ),
+        backgroundColor: Colors.red[600],
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(16),
+      ),
     );
   }
 
-  void _showSuccessDialog() {
+  void _showSuccessDialog(
+      String title, String message, IconData icon) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Berhasil!"),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.check_circle, color: Colors.green, size: 80),
-            const SizedBox(height: 16),
-            const Text("Absensi Anda telah tercatat secara lokal.", textAlign: TextAlign.center),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Icon(icon,
+                  color: const Color(0xFF10B981),
+                  size: 80),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1F2937),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              message,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[600],
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("OK")),
+          Center(
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF10B981),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 32, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                "OK",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -125,62 +211,141 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isInitializing) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text("Menginisialisasi Model Wajah..."),
-          ],
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ScaleTransition(
+                scale: Tween(begin: 0.8, end: 1.0).animate(
+                  CurvedAnimation(
+                    parent: _animationController,
+                    curve: Curves.easeInOut,
+                  ),
+                ),
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF6366F1).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Icon(
+                    Icons.face_rounded,
+                    size: 60,
+                    color: Color(0xFF6366F1),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
+              const CircularProgressIndicator(
+                color: Color(0xFF6366F1),
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                "Menginisialisasi Model Wajah...",
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Color(0xFF1F2937),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Verifikasi Wajah')),
-      body: Container(
-        padding: const EdgeInsets.all(24),
-        child: Center(
+      appBar: AppBar(
+        title: const Text('Verifikasi Wajah',
+            style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1F2937),
+                fontSize: 24)),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+      ),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 500),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Icon(Icons.face_retouching_natural, size: 100, color: Colors.blueAccent),
+                Container(
+                  padding: const EdgeInsets.all(32),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF6366F1).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: const Color(0xFF6366F1).withValues(alpha: 0.2),
+                      width: 2,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.face_retouching_natural_rounded,
+                    size: 100,
+                    color: Color(0xFF6366F1),
+                  ),
+                ),
                 const SizedBox(height: 32),
                 Text(
                   "Absensi Wajah",
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF1F2937)),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  "Pastikan wajah Anda terlihat jelas",
-                  style: Theme.of(context).textTheme.bodyLarge,
+                  "Gunakan teknologi pengenalan wajah untuk absensi yang lebih cepat dan aman",
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                    height: 1.5,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 48),
                 _buildMenuButton(
                   onPressed: _isProcessing ? null : _registerFace,
-                  icon: Icons.person_add,
+                  icon: Icons.person_add_rounded,
                   label: "Daftar Wajah Baru",
-                  color: Colors.blueAccent,
+                  color: const Color(0xFF6366F1),
+                  subtitle: "Simpan wajah Anda untuk pertama kali",
                 ),
                 const SizedBox(height: 16),
                 _buildMenuButton(
                   onPressed: _isProcessing ? null : _verifyAttendance,
-                  icon: Icons.camera_front,
+                  icon: Icons.camera_front_rounded,
                   label: "Absen Masuk/Pulang",
-                  color: Colors.teal,
+                  color: const Color(0xFF06B6D4),
+                  subtitle: "Verifikasi kehadiran Anda",
                 ),
                 const SizedBox(height: 32),
                 if (_isProcessing)
-                  Text(
-                    _status,
-                    style: const TextStyle(fontStyle: FontStyle.italic, color: Colors.grey),
-                    textAlign: TextAlign.center,
+                  Center(
+                    child: Column(
+                      children: [
+                        const CircularProgressIndicator(
+                          color: Color(0xFF6366F1),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          _status,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontStyle: FontStyle.italic,
+                            color: Color(0xFF6366F1),
+                            fontWeight: FontWeight.w500,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
                   ),
               ],
             ),
@@ -195,18 +360,62 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen> {
     required IconData icon,
     required String label,
     required Color color,
+    required String subtitle,
   }) {
-    return ElevatedButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon, size: 28),
-      label: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Text(label, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-      ),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: color,
-        foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: color.withValues(alpha: 0.3),
+              width: 1.5,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: color, size: 28),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1F2937),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.arrow_forward_rounded,
+                  color: Colors.grey[400], size: 20),
+            ],
+          ),
+        ),
       ),
     );
   }

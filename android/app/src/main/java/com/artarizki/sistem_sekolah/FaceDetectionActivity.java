@@ -10,8 +10,10 @@ import android.os.Bundle;
 import android.util.Size;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageCapture;
@@ -27,13 +29,18 @@ import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.face.FaceDetection;
 import com.google.mlkit.vision.face.FaceDetector;
 import com.google.mlkit.vision.face.FaceDetectorOptions;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import io.flutter.embedding.android.FlutterActivity;
 
-public class FaceDetectionActivity extends FlutterActivity implements View.OnClickListener {
+public class FaceDetectionActivity extends AppCompatActivity implements View.OnClickListener {
+    private static final int PERMISSION_CODE = 1001;
+    private static final String[] REQUIRED_PERMISSIONS = new String[]{Manifest.permission.CAMERA};
+
     PreviewView previewView;
     Button btnTakePhoto;
     File output;
@@ -42,11 +49,20 @@ public class FaceDetectionActivity extends FlutterActivity implements View.OnCli
     ImageCapture imageCapture;
     ImageAnalysis imageAnalysis;
     FaceDetector faceDetector;
+    private boolean isProcessingCapture = false;
+    private long faceDetectedStartTime = 0;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_face_detection);
+
+        View root = findViewById(R.id.main);
+        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+            int bottom = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
+            v.setPadding(0, 0, 0, bottom);
+            return insets;
+        });
 
         previewView = findViewById(R.id.viewFinder);
         btnTakePhoto = findViewById(R.id.camera_capture_button);
@@ -61,7 +77,33 @@ public class FaceDetectionActivity extends FlutterActivity implements View.OnCli
                 .build();
         faceDetector = FaceDetection.getClient(options);
 
-        startCamera();
+        if (allPermissionsGranted()) {
+            startCamera();
+        } else {
+            ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, PERMISSION_CODE);
+        }
+    }
+
+    private boolean allPermissionsGranted() {
+        for (String permission : REQUIRED_PERMISSIONS) {
+            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == PERMISSION_CODE) {
+            if (allPermissionsGranted()) {
+                startCamera();
+            } else {
+                Toast.makeText(this, "Izin kamera diperlukan untuk fitur ini", Toast.LENGTH_SHORT).show();
+                finish();
+            }
+        }
     }
 
     private void startCamera() {
@@ -78,6 +120,7 @@ public class FaceDetectionActivity extends FlutterActivity implements View.OnCli
                         .build();
 
                 imageAnalysis.setAnalyzer(executorService, imageProxy -> {
+                    @SuppressWarnings("UnsafeOptInUsageError")
                     Image mediaImage = imageProxy.getImage();
                     if (mediaImage != null) {
                         InputImage image = InputImage.fromMediaImage(mediaImage, imageProxy.getImageInfo().getRotationDegrees());
@@ -85,15 +128,31 @@ public class FaceDetectionActivity extends FlutterActivity implements View.OnCli
                                 .addOnSuccessListener(faces -> {
                                     runOnUiThread(() -> {
                                         if (!faces.isEmpty()) {
-                                            btnTakePhoto.setEnabled(true);
-                                            btnTakePhoto.setText("Ambil Foto");
+                                            if (faceDetectedStartTime == 0) {
+                                                faceDetectedStartTime = System.currentTimeMillis();
+                                            }
+
+                                            long elapsed = System.currentTimeMillis() - faceDetectedStartTime;
+                                            if (elapsed >= 1000 && !isProcessingCapture) {
+                                                isProcessingCapture = true;
+                                                btnTakePhoto.setText("Mengambil Gambar...");
+                                                takePicture();
+                                            } else {
+                                                btnTakePhoto.setEnabled(true);
+                                                btnTakePhoto.setText("Tahan Sebentar... " + (1 - (elapsed / 1000)));
+                                                // Just show "Tahan Sebentar..." if it's less than 1s
+                                                btnTakePhoto.setText("Tahan Sebentar...");
+                                            }
                                         } else {
+                                            faceDetectedStartTime = 0;
                                             btnTakePhoto.setEnabled(false);
                                             btnTakePhoto.setText("Wajah Tidak Terdeteksi");
                                         }
                                     });
                                 })
                                 .addOnCompleteListener(task -> imageProxy.close());
+                    } else {
+                        imageProxy.close();
                     }
                 });
 
@@ -108,7 +167,10 @@ public class FaceDetectionActivity extends FlutterActivity implements View.OnCli
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.camera_capture_button) {
-            takePicture();
+            if (!isProcessingCapture) {
+                isProcessingCapture = true;
+                takePicture();
+            }
         } else if (v.getId() == R.id.btn_close) {
             finish();
         }
@@ -130,4 +192,11 @@ public class FaceDetectionActivity extends FlutterActivity implements View.OnCli
             }
         });
     }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        executorService.shutdown();
+    }
 }
+

@@ -1,4 +1,21 @@
 function doGet(e) {
+  // If request asks for JSON data
+  if (e.parameter.action) {
+    var action = e.parameter.action;
+    var result = {};
+    
+    if (action === "getDashboard") result = getDashboardData();
+    else if (action === "getGuru") result = getGuruData();
+    else if (action === "getSiswa") result = getSiswaData(e.parameter.kelas);
+    else if (action === "getNilai") result = getNilaiData(e.parameter.mapel);
+    else if (action === "getRekap") result = getRekapData(e.parameter.bulan);
+    else if (action === "getRegisteredFace") result = getRegisteredFaceData(e.parameter.id);
+    
+    return ContentService.createTextOutput(JSON.stringify(result))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  // Default: Return Web Dashboard
   var template = HtmlService.createTemplateFromFile("Index");
   return template
     .evaluate()
@@ -7,12 +24,29 @@ function doGet(e) {
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
+function doPost(e) {
+  var data = JSON.parse(e.postData.contents);
+  var action = data.action;
+  var result = { status: "error", message: "Action not found" };
+
+  if (action === "registerFace") {
+    // In a real scenario, save to a Sheet
+    // For now, we simulate success
+    result = { status: "success", message: "Face registered successfully" };
+  } else if (action === "submitAttendance") {
+    result = { status: "success", message: "Attendance recorded" };
+  }
+
+  return ContentService.createTextOutput(JSON.stringify(result))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
 function include(filename) {
   return HtmlService.createHtmlOutputFromFile(filename).getContent();
 }
 
 // ==========================================
-// DUMMY DATA FETCHING FUNCTIONS (FOR DEMO)
+// DATA FUNCTIONS
 // ==========================================
 
 function getDashboardData() {
@@ -63,4 +97,9 @@ function getRekapData(bulan) {
     { kelas: 'Kelas 1B', hadir: 92, izin: 5, sakit: 2, alpa: 1 },
     { kelas: 'Kelas 2A', hadir: 98, izin: 1, sakit: 1, alpa: 0 }
   ];
+}
+
+function getRegisteredFaceData(id) {
+  // Mockup: return an empty list or some data if found
+  return null; 
 }

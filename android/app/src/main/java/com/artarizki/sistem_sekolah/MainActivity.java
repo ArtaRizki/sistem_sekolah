@@ -11,7 +11,7 @@ import java.util.List;
 public class MainActivity extends FlutterActivity {
     private static final String CHANNEL = "com.artarizki.sistem_sekolah/face";
     MethodChannel.Result methodChannelResult;
-    FaceHelper faceHelper = new FaceHelper();
+    static FaceHelper faceHelper = new FaceHelper();
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -22,27 +22,35 @@ public class MainActivity extends FlutterActivity {
                     methodChannelResult = result;
                     switch (call.method) {
                         case "initFaceHelper":
-                            try {
-                                String modelPath = call.argument("modelPath");
-                                faceHelper.init(this, modelPath);
-                                result.success(true);
-                            } catch (Exception e) {
-                                result.error("INIT_ERROR", e.getMessage(), null);
-                            }
+                            new Thread(() -> {
+                                try {
+                                    String modelPath = call.argument("modelPath");
+                                    faceHelper.init(this, modelPath);
+                                    runOnUiThread(() -> result.success(true));
+                                } catch (Exception e) {
+                                    runOnUiThread(() -> result.error("INIT_ERROR", e.getMessage(), null));
+                                }
+                            }).start();
                             break;
                         case "startFaceCapture":
                             startActivityForResult(new Intent(MainActivity.this, FaceDetectionActivity.class), 202);
                             break;
                         case "getEmbedding":
-                            String path = call.argument("imagePath");
-                            float[] embedding = faceHelper.getEmbedding(path);
-                            if (embedding != null) {
-                                List<Double> list = new ArrayList<>();
-                                for (float f : embedding) list.add((double) f);
-                                result.success(list);
-                            } else {
-                                result.error("EMBEDDING_ERROR", "Failed to generate embedding", null);
-                            }
+                            new Thread(() -> {
+                                try {
+                                    String path = call.argument("imagePath");
+                                    float[] embedding = faceHelper.getEmbedding(path);
+                                    if (embedding != null) {
+                                        List<Double> list = new ArrayList<>();
+                                        for (float f : embedding) list.add((double) f);
+                                        runOnUiThread(() -> result.success(list));
+                                    } else {
+                                        runOnUiThread(() -> result.error("EMBEDDING_ERROR", "Failed to generate embedding", null));
+                                    }
+                                } catch (Exception e) {
+                                    runOnUiThread(() -> result.error("EMBEDDING_ERROR", e.getMessage(), null));
+                                }
+                            }).start();
                             break;
                         default:
                             result.notImplemented();

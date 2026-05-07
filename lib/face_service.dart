@@ -5,32 +5,42 @@ import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'api_service.dart';
 
 class FaceService {
   static const _channel = MethodChannel('com.artarizki.sistem_sekolah/face');
-  
+
+  final ApiService _apiService = ApiService();
   String? _modelPath;
 
   Future<void> init() async {
     final dir = await getApplicationDocumentsDirectory();
     final modelFile = File('${dir.path}/model/vggface.tflite');
-    
+
     if (!modelFile.existsSync()) {
+      print("Model missing, downloading...");
       await _downloadModel(modelFile);
     }
-    
-    _modelPath = modelFile.path;
-    await _channel.invokeMethod('initFaceHelper', {'modelPath': _modelPath});
+
+    if (modelFile.existsSync()) {
+      _modelPath = modelFile.path;
+      await _channel.invokeMethod('initFaceHelper', {'modelPath': _modelPath});
+    } else {
+      throw Exception("Gagal mengunduh model wajah.");
+    }
   }
 
   Future<void> _downloadModel(File file) async {
     file.createSync(recursive: true);
-    final response = await http.get(Uri.parse('https://janissari.id/api/modelling'));
-    final json = jsonDecode(response.body);
-    final modelUrl = json['data']['model_location'];
-    
-    final modelRes = await http.get(Uri.parse(modelUrl));
-    await file.writeAsBytes(modelRes.bodyBytes);
+    final response = await http.get(
+      Uri.parse('https://janissari.id/modelling/vggface2.tflite'),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception("Gagal mengunduh file model: ${response.statusCode}");
+    }
+
+    await file.writeAsBytes(response.bodyBytes);
   }
 
   Future<String?> captureFace() async {
@@ -38,13 +48,23 @@ class FaceService {
   }
 
   Future<List<double>?> getEmbedding(String imagePath) async {
-    final List<dynamic>? result = await _channel.invokeMethod('getEmbedding', {'imagePath': imagePath});
+    final List<dynamic>? result = await _channel.invokeMethod('getEmbedding', {
+      'imagePath': imagePath,
+    });
     return result?.cast<double>();
   }
 
   Future<void> saveRegisteredFace(List<double> embedding) async {
+    // Save locally
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('registered_face', jsonEncode(embedding));
+    
+    // Sync to server
+    await _apiService.registerFace(embedding);
+  }
+
+  Future<void> syncAttendance(List<double> embedding, double similarity) async {
+    await _apiService.submitAttendance(embedding, similarity);
   }
 
   Future<List<double>?> getRegisteredFace() async {
