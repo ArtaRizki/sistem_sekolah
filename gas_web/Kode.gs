@@ -1,6 +1,29 @@
 // ID SPREADSHEET USER
 var SPREADSHEET_ID = "1wydhxdPM_GBtvaPxuR6s-zct463x_8aXYMbBE6pOT_Q";
-var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+var _ss = null;
+
+/**
+ * Lazy load spreadsheet object to keep the script "lightweight"
+ */
+function getSs() {
+  if (!_ss) _ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  return _ss;
+}
+
+/**
+ * Helper to get sheet and handle missing sheets
+ */
+function getSheet(name) {
+  var ss = getSs();
+  var sheet = ss.getSheetByName(name);
+  if (!sheet) {
+    sheet = ss.insertSheet(name);
+    // Add default headers if needed
+    if (name === "Wajah") sheet.appendRow(["ID", "Embedding", "CreatedAt"]);
+    if (name === "Absensi") sheet.appendRow(["Tanggal", "Nama", "Status", "Similarity", "Device_Timestamp"]);
+  }
+  return sheet;
+}
 
 function doGet(e) {
   // If request asks for JSON data
@@ -35,30 +58,38 @@ function doPost(e) {
 
   if (action === "registerFace") {
     try {
-      var sheet = ss.getSheetByName("Wajah");
-      if (!sheet) sheet = ss.insertSheet("Wajah");
+      var sheet = getSheet("Wajah");
+      var userId = data.id || new Date().getTime().toString();
       
-      // Save ID and Embedding
-      sheet.appendRow([
-        new Date().getTime().toString(), 
-        JSON.stringify(data.embedding),
-        new Date().toISOString()
-      ]);
-      result = { status: "success", message: "Face registered successfully" };
+      // Check for existing ID to update instead of append
+      var finder = sheet.createTextFinder(userId).matchEntireCell(true).findNext();
+      var embeddingStr = JSON.stringify(data.embedding);
+      
+      if (finder) {
+        var row = finder.getRow();
+        sheet.getRange(row, 2).setValue(embeddingStr); // Update embedding
+        sheet.getRange(row, 3).setValue(new Date().toISOString()); // Update timestamp
+      } else {
+        sheet.appendRow([
+          userId, 
+          embeddingStr,
+          new Date().toISOString()
+        ]);
+      }
+      result = { status: "success", message: "Face registered successfully", id: userId };
     } catch (err) {
       result = { status: "error", message: err.toString() };
     }
   } else if (action === "submitAttendance") {
     try {
-      var sheet = ss.getSheetByName("Absensi");
-      if (!sheet) sheet = ss.insertSheet("Absensi");
+      var sheet = getSheet("Absensi");
       
       sheet.appendRow([
         new Date().toISOString(),
-        "User Mobile", // Bisa dikembangkan untuk kirim Nama/ID Siswa
-        "Hadir",
-        data.similarity,
-        data.timestamp
+        data.nama || "Unknown User", 
+        data.status || "Hadir",
+        data.similarity || 0,
+        data.timestamp || ""
       ]);
       result = { status: "success", message: "Attendance recorded" };
     } catch (err) {
@@ -90,37 +121,40 @@ function getDashboardData() {
 }
 
 function getCount(sheetName) {
-  var sheet = ss.getSheetByName(sheetName);
+  var sheet = getSs().getSheetByName(sheetName);
   if (!sheet) return 0;
   return Math.max(0, sheet.getLastRow() - 1);
 }
 
 function getGuruData() {
-  var sheet = ss.getSheetByName("Guru");
+  var sheet = getSs().getSheetByName("Guru");
   if (!sheet) return [];
   var values = sheet.getDataRange().getValues();
   var data = [];
   for (var i = 1; i < values.length; i++) {
-    data.push({
-      nama: values[i][0],
-      nip: values[i][1],
-      mapel: values[i][2]
-    });
+    if (values[i][0]) { // Only if Nama exists
+      data.push({
+        nama: values[i][0],
+        nip: values[i][1],
+        mapel: values[i][2]
+      });
+    }
   }
   return data;
 }
 
 function getSiswaData(kelas) {
-  var sheet = ss.getSheetByName("Siswa");
+  var sheet = getSs().getSheetByName("Siswa");
   if (!sheet) return [];
   var values = sheet.getDataRange().getValues();
   var data = [];
   for (var i = 1; i < values.length; i++) {
-    if (!kelas || values[i][3] === kelas) {
+    if (values[i][0] && (!kelas || values[i][3] === kelas)) {
       data.push({
         nama: values[i][0],
         nis: values[i][1],
-        jk: values[i][2]
+        jk: values[i][2],
+        kelas: values[i][3]
       });
     }
   }
@@ -128,18 +162,36 @@ function getSiswaData(kelas) {
 }
 
 function getNilaiData(mapel) {
-  // Contoh logic pembacaan nilai
-  return [
-    { nama: 'Contoh Siswa', tugas1: 85, tugas2: 90, uh: 88 }
-  ];
+  var sheet = getSs().getSheetByName("Nilai");
+  if (!sheet) return [];
+  var values = sheet.getDataRange().getValues();
+  var data = [];
+  for (var i = 1; i < values.length; i++) {
+    if (!mapel || values[i][2] === mapel) {
+       data.push({ nama: values[i][0], nis: values[i][1], mapel: values[i][2], nilai: values[i][3] });
+    }
+  }
+  return data.length > 0 ? data : [{ nama: 'Data Kosong', nis: '-', mapel: mapel, nilai: 0 }];
 }
 
 function getRekapData(bulan) {
-  return [
-    { kelas: 'Kelas 1A', hadir: 95, izin: 3, sakit: 2, alpa: 0 }
-  ];
+  var sheet = getSs().getSheetByName("Absensi");
+  if (!sheet) return [];
+  // Basic rekap logic: count appearances in Absensi
+  return [{ kelas: 'Total', hadir: getCount("Absensi"), izin: 0, sakit: 0, alpa: 0 }];
 }
 
 function getRegisteredFaceData(id) {
+  if (!id) return null;
+  var sheet = getSheet("Wajah");
+  var finder = sheet.createTextFinder(id).matchEntireCell(true).findNext();
+  if (finder) {
+    var row = finder.getRow();
+    var values = sheet.getRange(row, 1, 1, 2).getValues()[0];
+    return {
+      id: values[0],
+      embedding: JSON.parse(values[1])
+    };
+  }
   return null;
 }
