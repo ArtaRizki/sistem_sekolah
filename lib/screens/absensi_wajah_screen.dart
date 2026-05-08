@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../face_service.dart';
+import '../api_service.dart';
 
 class AbsensiWajahScreen extends StatefulWidget {
   const AbsensiWajahScreen({super.key});
@@ -15,6 +16,9 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
   bool _isProcessing = false;
   String _status = "Siap";
   late AnimationController _animationController;
+  bool _isTripodMode = false;
+  List<dynamic> _registeredFaces = [];
+  final ApiService _apiService = ApiService();
 
   @override
   void initState() {
@@ -24,6 +28,16 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
       vsync: this,
     )..repeat();
     _initService();
+    _loadRegisteredFaces();
+  }
+
+  Future<void> _loadRegisteredFaces() async {
+    try {
+      final faces = await _apiService.getSiswaWajah();
+      setState(() => _registeredFaces = faces);
+    } catch (e) {
+      debugPrint("Error loading faces: $e");
+    }
   }
 
   @override
@@ -48,6 +62,37 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
   }
 
   Future<void> _registerFace() async {
+    // Show student picker first
+    final List<dynamic> siswaList = await _apiService.getSiswa();
+    if (siswaList.isEmpty) {
+      _showErrorSnackBar("Data siswa kosong. Silakan tambah siswa dulu.");
+      return;
+    }
+
+    String? selectedNis;
+    if (mounted) {
+      selectedNis = await showDialog<String>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text("Pilih Siswa"),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: siswaList.length,
+              itemBuilder: (ctx, i) => ListTile(
+                title: Text(siswaList[i]['nama']),
+                subtitle: Text("NIS: ${siswaList[i]['nis']} • ${siswaList[i]['kelas']}"),
+                onTap: () => Navigator.pop(ctx, siswaList[i]['nis'].toString()),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (selectedNis == null) return;
+
     setState(() {
       _isProcessing = true;
       _status = "Membuka Kamera...";
@@ -59,9 +104,10 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
         setState(() => _status = "Memproses Wajah...");
         final embedding = await _faceService.getEmbedding(path);
         if (embedding != null) {
-          await _faceService.saveRegisteredFace(embedding);
+          await _faceService.saveRegisteredFace(embedding, userId: selectedNis);
+          await _loadRegisteredFaces();
           _showSuccessDialog("Wajah Berhasil Didaftarkan!",
-              "Wajah Anda telah tersimpan dan siap untuk verifikasi.",
+              "Wajah siswa dengan NIS $selectedNis telah tersimpan.",
               Icons.check_circle_rounded);
         }
       }
@@ -76,42 +122,79 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
   }
 
   Future<void> _verifyAttendance() async {
-    final registered = await _faceService.getRegisteredFace();
-    if (registered == null) {
-      _showErrorSnackBar(
-          "Silakan daftar wajah terlebih dahulu!");
-      return;
+    if (_registeredFaces.isEmpty) {
+      await _loadRegisteredFaces();
+      if (_registeredFaces.isEmpty) {
+        _showErrorSnackBar("Tidak ada data wajah terdaftar!");
+        return;
+      }
     }
 
     setState(() {
       _isProcessing = true;
-      _status = "Membuka Kamera...";
+      _status = _isTripodMode ? "Scanning... (Tripod Mode)" : "Membuka Kamera...";
     });
 
     try {
-      final path = await _faceService.captureFace();
-      if (path != null) {
+      do {
+        final path = await _faceService.captureFace();
+        if (path == null) break;
+
         setState(() => _status = "Memverifikasi...");
         final embedding = await _faceService.getEmbedding(path);
         if (embedding != null) {
-          final similarity =
-              _faceService.calculateSimilarity(registered, embedding);
-          debugPrint("Similarity: $similarity");
+          Map<String, dynamic>? bestMatch;
+          double maxSimilarity = 0.0;
 
-          if (similarity > 0.75) {
-            // Kirim data ke backend GAS
-            _faceService.syncAttendance(embedding, similarity);
+          for (var reg in _registeredFaces) {
+            final List<double> regEmbedding = (reg['embedding'] as List).cast<double>();
+            final similarity = _faceService.calculateSimilarity(regEmbedding, embedding);
+            if (similarity > maxSimilarity) {
+              maxSimilarity = similarity;
+              bestMatch = reg;
+            }
+          }
 
-            _showSuccessDialog(
-                "Absensi Berhasil!",
-                "Kehadiran Anda telah tercatat dengan persentase kecocokan ${(similarity * 100).toStringAsFixed(1)}%",
-                Icons.face_rounded);
+          if (maxSimilarity > 0.75 && bestMatch != null) {
+            final name = bestMatch['nama'];
+            final sekolah = bestMatch['sekolah'];
+            
+            await _faceService.syncAttendance(embedding, maxSimilarity, name: name, sekolah: sekolah);
+
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text("Hadir: $name (${(maxSimilarity * 100).toStringAsFixed(1)}%)"),
+                  backgroundColor: Colors.green,
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            }
+            
+            if (!_isTripodMode) {
+              _showSuccessDialog(
+                  "Absensi Berhasil!",
+                  "Kehadiran $name telah tercatat.",
+                  Icons.face_rounded);
+            }
           } else {
-            _showErrorSnackBar(
-                "Wajah tidak cocok! (Score: ${(similarity * 100).toStringAsFixed(1)}%)");
+            if (mounted) {
+               ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text("Wajah tidak dikenali. (Max: ${(maxSimilarity * 100).toStringAsFixed(1)}%)"),
+                  backgroundColor: Colors.orange,
+                  duration: const Duration(seconds: 1),
+                ),
+              );
+            }
           }
         }
-      }
+        
+        if (_isTripodMode) {
+          setState(() => _status = "Scanning...");
+          await Future.delayed(const Duration(seconds: 2)); // Pause before next scan
+        }
+      } while (_isTripodMode);
     } catch (e) {
       _showErrorSnackBar("Gagal verifikasi: $e");
     } finally {
@@ -313,17 +396,34 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
                 _buildMenuButton(
                   onPressed: _isProcessing ? null : _registerFace,
                   icon: Icons.person_add_rounded,
-                  label: "Daftar Wajah Baru",
+                  label: "Daftar Wajah Siswa",
                   color: const Color(0xFF6366F1),
-                  subtitle: "Simpan wajah Anda untuk pertama kali",
+                  subtitle: "Simpan wajah siswa ke database",
                 ),
                 const SizedBox(height: 16),
                 _buildMenuButton(
                   onPressed: _isProcessing ? null : _verifyAttendance,
                   icon: Icons.camera_front_rounded,
-                  label: "Absen Masuk/Pulang",
+                  label: "Mulai Absensi",
                   color: const Color(0xFF06B6D4),
-                  subtitle: "Verifikasi kehadiran Anda",
+                  subtitle: _isTripodMode ? "Mode Tripod Aktif (Otomatis)" : "Verifikasi kehadiran siswa",
+                ),
+                const SizedBox(height: 24),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.grey[200]!),
+                  ),
+                  child: SwitchListTile(
+                    title: const Text("Mode Tripod", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    subtitle: const Text("Kamera akan terus menyala untuk absensi otomatis", style: TextStyle(fontSize: 12)),
+                    value: _isTripodMode,
+                    activeThumbColor: const Color(0xFF6366F1),
+                    activeTrackColor: const Color(0xFF6366F1).withValues(alpha: 0.3),
+                    onChanged: _isProcessing ? null : (v) => setState(() => _isTripodMode = v),
+                  ),
                 ),
                 const SizedBox(height: 32),
                 if (_isProcessing)

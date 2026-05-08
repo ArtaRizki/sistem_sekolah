@@ -141,7 +141,8 @@ class _MapelScreenState extends State<MapelScreen> {
                   await _apiService.addMapel(namaC.text, kodeC.text, schoolsToSave);
                 }
                 _loadMapel();
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(isEdit ? 'Mapel diperbarui' : 'Mapel ditambahkan')));
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(isEdit ? 'Mapel diperbarui' : 'Mapel ditambahkan')));
               },
               child: Text(isEdit ? 'Simpan' : 'Tambah'),
             ),

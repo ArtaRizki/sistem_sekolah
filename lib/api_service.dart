@@ -115,6 +115,19 @@ class ApiService {
     }
   }
 
+  Future<List<dynamic>> getSiswaWajah({String? sekolah}) async {
+    final s = sekolah != null ? '&sekolah=${Uri.encodeComponent(sekolah)}' : '';
+    final url = Uri.parse('$baseUrl?action=getSiswaWajah$s');
+    try {
+      final response = await http.get(url);
+      _log('GET', url, response: response);
+      return jsonDecode(response.body);
+    } catch (e) {
+      _log('GET', url, error: e);
+      return [];
+    }
+  }
+
   Future<List<dynamic>> getNilai(String mapel, {String? sekolah}) async {
     final s = sekolah != null ? '&sekolah=${Uri.encodeComponent(sekolah)}' : '';
     final url = Uri.parse('$baseUrl?action=getNilai&mapel=${Uri.encodeComponent(mapel)}$s');
@@ -180,11 +193,11 @@ class ApiService {
   // ==========================================
   // SEKOLAH CRUD
   // ==========================================
-  Future<Map<String, dynamic>> addSekolah(String nama, String alamat) =>
-      _postAction({'action': 'addSekolah', 'nama': nama, 'alamat': alamat});
+  Future<Map<String, dynamic>> addSekolah(String nama, String alamat, String tingkat) =>
+      _postAction({'action': 'addSekolah', 'nama': nama, 'alamat': alamat, 'tingkat': tingkat});
 
-  Future<Map<String, dynamic>> updateSekolah(String oldNama, String nama, String alamat) =>
-      _postAction({'action': 'updateSekolah', 'oldNama': oldNama, 'nama': nama, 'alamat': alamat});
+  Future<Map<String, dynamic>> updateSekolah(String oldNama, String nama, String alamat, String tingkat) =>
+      _postAction({'action': 'updateSekolah', 'oldNama': oldNama, 'nama': nama, 'alamat': alamat, 'tingkat': tingkat});
 
   Future<Map<String, dynamic>> deleteSekolah(String nama) =>
       _postAction({'action': 'deleteSekolah', 'nama': nama});
@@ -204,16 +217,17 @@ class ApiService {
   // ==========================================
   // FACE & ATTENDANCE
   // ==========================================
-  Future<bool> registerFace(List<double> embedding) async {
-    final result = await _postAction({'action': 'registerFace', 'embedding': embedding});
+  Future<bool> registerFace(List<double> embedding, {String? id}) async {
+    final result = await _postAction({'action': 'registerFace', 'embedding': embedding, 'id': id});
     return result['status'] == 'success';
   }
 
-  Future<bool> submitAttendance(List<double> embedding, double similarity, {String? sekolah}) async {
+  Future<bool> submitAttendance(List<double> embedding, double similarity, {String? name, String? sekolah}) async {
     final result = await _postAction({
       'action': 'submitAttendance',
       'embedding': embedding,
       'similarity': similarity,
+      'nama': name ?? 'Unknown',
       'timestamp': DateTime.now().toIso8601String(),
       'sekolah': sekolah ?? '',
     });

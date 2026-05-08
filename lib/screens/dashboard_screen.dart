@@ -101,6 +101,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 fontSize: 14,
                               ),
                             ),
+                            if (widget.sekolah != null && _data['tingkat'] != null)
+                              Text(
+                                'Tingkat: ${_data['tingkat']}',
+                                style: const TextStyle(
+                                  color: Colors.white60,
+                                  fontSize: 12,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
                           ],
                         ),
                       ),

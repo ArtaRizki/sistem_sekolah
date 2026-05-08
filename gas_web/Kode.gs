@@ -30,33 +30,34 @@ function getSheet(name) {
       sheet.appendRow(["TIK", "TIK"]);
     }
     if (name === "Sekolah") {
-      sheet.appendRow(["Nama", "Alamat"]);
-      sheet.appendRow(["MTs Al-Ma'arif 1 Plered", "Plered, Purwakarta"]);
-      sheet.appendRow(["MA Al-Ma'arif 2 Plered", "Plered, Purwakarta"]);
-      sheet.appendRow(["MAU Al-Azhar 1 Purwakarta", "Purwakarta, Jawa Barat"]);
+      sheet.appendRow(["Nama", "Alamat", "Tingkat"]);
+      sheet.appendRow(["MTs Al-Ma'arif 1 Plered", "Plered, Purwakarta", "MTS"]);
+      sheet.appendRow(["MA Al-Ma'arif 2 Plered", "Plered, Purwakarta", "MA"]);
+      sheet.appendRow(["MAU Al-Azhar 1 Purwakarta", "Purwakarta, Jawa Barat", "MA"]);
     }
     if (name === "Nilai") sheet.appendRow(["Nama", "NIS", "Mapel", "Nilai", "Sekolah"]);
     if (name === "Wajah") sheet.appendRow(["ID", "Embedding", "CreatedAt"]);
     if (name === "Absensi") sheet.appendRow(["Tanggal", "Nama", "Status", "Similarity", "Device_Timestamp", "Sekolah"]);
   } else {
-    // Auto-migrate: add 'Sekolah' column if missing on relational sheets
+    // Auto-migrate: check for missing columns
+    var headers = sheet.getRange(1, 1, 1, Math.max(1, sheet.getLastColumn())).getValues()[0];
+    
+    // 1. Check for 'Tingkat' in Sekolah sheet
+    if (name === "Sekolah" && headers.indexOf("Tingkat") === -1) {
+      sheet.getRange(1, sheet.getLastColumn() + 1).setValue("Tingkat");
+    }
+    
+    // 2. Check for 'Sekolah' in relational sheets
     var needsSekolah = ["Guru", "Siswa", "Nilai", "Absensi"];
-    if (needsSekolah.indexOf(name) !== -1) {
-      var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-      var hasSekolah = false;
-      for (var h = 0; h < headers.length; h++) {
-        if (headers[h].toString() === "Sekolah") { hasSekolah = true; break; }
-      }
-      if (!hasSekolah) {
-        var newCol = sheet.getLastColumn() + 1;
-        sheet.getRange(1, newCol).setValue("Sekolah");
-        // Fill empty sekolah for existing data rows
-        var lastRow = sheet.getLastRow();
-        if (lastRow > 1) {
-          var emptyVals = [];
-          for (var r = 0; r < lastRow - 1; r++) emptyVals.push([""]);
-          sheet.getRange(2, newCol, lastRow - 1, 1).setValues(emptyVals);
-        }
+    if (needsSekolah.indexOf(name) !== -1 && headers.indexOf("Sekolah") === -1) {
+      var newCol = sheet.getLastColumn() + 1;
+      sheet.getRange(1, newCol).setValue("Sekolah");
+      // Fill empty sekolah for existing data rows
+      var lastRow = sheet.getLastRow();
+      if (lastRow > 1) {
+        var emptyVals = [];
+        for (var r = 0; r < lastRow - 1; r++) emptyVals.push([""]);
+        sheet.getRange(2, newCol, lastRow - 1, 1).setValues(emptyVals);
       }
     }
   }
@@ -81,6 +82,7 @@ function doGet(e) {
     else if (action === "getRekap") result = getRekapData(e.parameter.bulan, sekolah);
     else if (action === "getRegisteredFace") result = getRegisteredFaceData(e.parameter.id);
     else if (action === "getKelas") result = getKelasData(sekolah);
+    else if (action === "getSiswaWajah") result = getSiswaWajahData(sekolah);
     
     return ContentService.createTextOutput(JSON.stringify(result))
       .setMimeType(ContentService.MimeType.JSON);
@@ -145,11 +147,11 @@ function doPost(e) {
     // ---- SEKOLAH CRUD ----
     else if (action === "addSekolah") {
       var sheet = getSheet("Sekolah");
-      sheet.appendRow([data.nama, data.alamat]);
+      sheet.appendRow([data.nama, data.alamat, data.tingkat || "MTS"]);
       result = { status: "success", message: "Sekolah ditambahkan" };
     }
     else if (action === "updateSekolah") {
-      result = updateRow("Sekolah", data.oldNama, [data.nama, data.alamat]);
+      result = updateRow("Sekolah", data.oldNama, [data.nama, data.alamat, data.tingkat || "MTS"]);
     }
     else if (action === "deleteSekolah") {
       result = deleteRow("Sekolah", data.nama);
@@ -171,17 +173,21 @@ function doPost(e) {
     // ---- FACE & ATTENDANCE ----
     else if (action === "registerFace") {
       var sheet = getSheet("Wajah");
-      var userId = data.id || new Date().getTime().toString();
-      var finder = sheet.createTextFinder(userId).matchEntireCell(true).findNext();
-      var embeddingStr = JSON.stringify(data.embedding);
-      if (finder) {
-        var row = finder.getRow();
-        sheet.getRange(row, 2).setValue(embeddingStr);
-        sheet.getRange(row, 3).setValue(new Date().toISOString());
+      var userId = data.id; // NIS
+      if (!userId) {
+         result = { status: "error", message: "ID (NIS) diperlukan" };
       } else {
-        sheet.appendRow([userId, embeddingStr, new Date().toISOString()]);
+        var finder = sheet.createTextFinder(userId).matchEntireCell(true).findNext();
+        var embeddingStr = JSON.stringify(data.embedding);
+        if (finder) {
+          var row = finder.getRow();
+          sheet.getRange(row, 2).setValue(embeddingStr);
+          sheet.getRange(row, 3).setValue(new Date().toISOString());
+        } else {
+          sheet.appendRow([userId, embeddingStr, new Date().toISOString()]);
+        }
+        result = { status: "success", message: "Face registered", id: userId };
       }
-      result = { status: "success", message: "Face registered", id: userId };
     }
     else if (action === "submitAttendance") {
       var sheet = getSheet("Absensi");
@@ -273,15 +279,27 @@ function include(filename) {
 // ==========================================
 
 function getDashboardData(sekolah) {
+  var sekolahData = getSekolahData();
+  var tingkat = "";
+  if (sekolah) {
+    for (var i = 0; i < sekolahData.length; i++) {
+      if (sekolahData[i].nama === sekolah) {
+        tingkat = sekolahData[i].tingkat;
+        break;
+      }
+    }
+  }
+  
   return {
     appName: "DRP Absensi",
     guru: "Dheri Rama Permadhi, S.Pd",
-    sekolah: getSekolahData(),
+    sekolah: sekolahData,
     mapel: getMapelData(),
     totalSiswa: countFiltered("Siswa", sekolah),
     totalGuru: countFiltered("Guru", sekolah),
-    totalSekolah: getCount("Sekolah"),
-    totalMapel: getCount("Mapel")
+    totalSekolah: sekolahData.length,
+    totalMapel: getCount("Mapel"),
+    tingkat: tingkat
   };
 }
 
@@ -291,16 +309,21 @@ function getCount(sheetName) {
   return Math.max(0, sheet.getLastRow() - 1);
 }
 
-/** Count rows filtered by sekolah (last column) */
+/** Count rows filtered by sekolah column (header-aware) */
 function countFiltered(sheetName, sekolah) {
   if (!sekolah) return getCount(sheetName);
   var sheet = getSs().getSheetByName(sheetName);
   if (!sheet) return 0;
   var values = sheet.getDataRange().getValues();
+  if (values.length < 2) return 0;
+  
+  var headers = values[0];
+  var colIdx = headers.indexOf("Sekolah");
+  if (colIdx === -1) return 0;
+  
   var count = 0;
-  var lastCol = values[0].length - 1; // Sekolah is last column
   for (var i = 1; i < values.length; i++) {
-    if (values[i][lastCol].toString() === sekolah) count++;
+    if (values[i][colIdx].toString() === sekolah) count++;
   }
   return count;
 }
@@ -363,7 +386,11 @@ function getSekolahData() {
   var data = [];
   for (var i = 1; i < values.length; i++) {
     if (values[i][0]) {
-      data.push({ nama: values[i][0], alamat: values[i][1] });
+      data.push({ 
+        nama: values[i][0], 
+        alamat: values[i][1], 
+        tingkat: values[i][2] || "MTS" 
+      });
     }
   }
   return data;
@@ -431,6 +458,37 @@ function getRekapData(bulan, sekolah) {
     result.push(r);
   }
   return result;
+}
+
+function getSiswaWajahData(sekolah) {
+  var siswaSheet = getSheet("Siswa");
+  var wajahSheet = getSheet("Wajah");
+  
+  var siswaValues = siswaSheet.getDataRange().getValues();
+  var wajahValues = wajahSheet.getDataRange().getValues();
+  
+  var wajahMap = {};
+  for (var j = 1; j < wajahValues.length; j++) {
+    wajahMap[wajahValues[j][0].toString()] = JSON.parse(wajahValues[j][1]);
+  }
+  
+  var data = [];
+  for (var i = 1; i < siswaValues.length; i++) {
+    var nis = siswaValues[i][1].toString();
+    if (!nis) continue;
+    if (sekolah && siswaValues[i][4].toString() !== sekolah) continue;
+    
+    if (wajahMap[nis]) {
+      data.push({
+        nama: siswaValues[i][0],
+        nis: nis,
+        kelas: siswaValues[i][3],
+        sekolah: siswaValues[i][4],
+        embedding: wajahMap[nis]
+      });
+    }
+  }
+  return data;
 }
 
 function getRegisteredFaceData(id) {

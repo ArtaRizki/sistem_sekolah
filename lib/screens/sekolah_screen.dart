@@ -38,41 +38,55 @@ class _SekolahScreenState extends State<SekolahScreen> {
   void _showDialog({Map<String, dynamic>? sekolah}) {
     final namaC = TextEditingController(text: sekolah?['nama'] ?? '');
     final alamatC = TextEditingController(text: sekolah?['alamat'] ?? '');
+    String tingkat = sekolah?['tingkat'] ?? 'MTS';
     final isEdit = sekolah != null;
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(isEdit ? 'Edit Sekolah' : 'Tambah Sekolah'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(controller: namaC, decoration: const InputDecoration(labelText: 'Nama Sekolah', border: OutlineInputBorder()), textCapitalization: TextCapitalization.words),
-            const SizedBox(height: 12),
-            TextField(controller: alamatC, decoration: const InputDecoration(labelText: 'Alamat', border: OutlineInputBorder()), textCapitalization: TextCapitalization.words),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: Text(isEdit ? 'Edit Sekolah' : 'Tambah Sekolah'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(controller: namaC, decoration: const InputDecoration(labelText: 'Nama Sekolah', border: OutlineInputBorder()), textCapitalization: TextCapitalization.words),
+              const SizedBox(height: 12),
+              TextField(controller: alamatC, decoration: const InputDecoration(labelText: 'Alamat', border: OutlineInputBorder()), textCapitalization: TextCapitalization.words),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                initialValue: tingkat,
+                decoration: const InputDecoration(labelText: 'Tingkat', border: OutlineInputBorder()),
+                items: const [
+                  DropdownMenuItem(value: 'MTS', child: Text('MTs (SMP)')),
+                  DropdownMenuItem(value: 'MA', child: Text('MA (SMA)')),
+                  DropdownMenuItem(value: 'SD', child: Text('SD')),
+                ],
+                onChanged: (v) => setDialogState(() => tingkat = v!),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+            FilledButton(
+              onPressed: () async {
+                if (namaC.text.isEmpty) return;
+                Navigator.pop(ctx);
+                setState(() => _isLoading = true);
+                if (isEdit) {
+                  await _apiService.updateSekolah(sekolah['nama'], namaC.text, alamatC.text, tingkat);
+                } else {
+                  await _apiService.addSekolah(namaC.text, alamatC.text, tingkat);
+                }
+                _loadSekolah();
+                _notifyParent();
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(isEdit ? 'Sekolah diperbarui' : 'Sekolah ditambahkan')));
+                }
+              },
+              child: Text(isEdit ? 'Simpan' : 'Tambah'),
+            ),
           ],
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
-          FilledButton(
-            onPressed: () async {
-              if (namaC.text.isEmpty) return;
-              Navigator.pop(ctx);
-              setState(() => _isLoading = true);
-              if (isEdit) {
-                await _apiService.updateSekolah(sekolah['nama'], namaC.text, alamatC.text);
-              } else {
-                await _apiService.addSekolah(namaC.text, alamatC.text);
-              }
-              _loadSekolah();
-              _notifyParent();
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(isEdit ? 'Sekolah diperbarui' : 'Sekolah ditambahkan')));
-              }
-            },
-            child: Text(isEdit ? 'Simpan' : 'Tambah'),
-          ),
-        ],
       ),
     );
   }

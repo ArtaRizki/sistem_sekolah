@@ -55,17 +55,13 @@ class FaceService {
     return result?.cast<double>();
   }
 
-  Future<void> saveRegisteredFace(List<double> embedding) async {
-    // Save locally
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('registered_face', jsonEncode(embedding));
-
+  Future<void> saveRegisteredFace(List<double> embedding, {String? userId}) async {
     // Sync to server
-    await _apiService.registerFace(embedding);
+    await _apiService.registerFace(embedding, id: userId);
   }
 
-  Future<void> syncAttendance(List<double> embedding, double similarity) async {
-    await _apiService.submitAttendance(embedding, similarity);
+  Future<void> syncAttendance(List<double> embedding, double similarity, {String? name, String? sekolah}) async {
+    await _apiService.submitAttendance(embedding, similarity, name: name, sekolah: sekolah);
   }
 
   Future<List<double>?> getRegisteredFace() async {

@@ -53,68 +53,93 @@ class _SiswaScreenState extends State<SiswaScreen> {
   void _showSiswaDialog({Map<String, dynamic>? siswa}) {
     final namaC = TextEditingController(text: siswa?['nama'] ?? '');
     final nisC = TextEditingController(text: siswa?['nis'] ?? '');
-    final kelasC = TextEditingController(text: siswa?['kelas'] ?? '');
+    String selectedKelas = siswa?['kelas'] ?? '';
     String jk = siswa?['jk'] ?? 'L';
     String sekolah = siswa?['sekolah'] ?? widget.sekolah ?? (_sekolahList.isNotEmpty ? _sekolahList.first['nama'] : '');
     final isEdit = siswa != null;
 
+    List<String> getClassesForSekolah(String sekolahNama) {
+      final s = _sekolahList.firstWhere((element) => element['nama'] == sekolahNama, orElse: () => null);
+      if (s == null) return [];
+      final tingkat = s['tingkat'] ?? 'MTS';
+      if (tingkat == 'MTS') return ['7 (VII)', '8 (VIII)', '9 (IX)'];
+      if (tingkat == 'MA') return ['10 (X)', '11 (XI)', '12 (XII)'];
+      if (tingkat == 'SD') return ['1', '2', '3', '4', '5', '6'];
+      return ['Lainnya'];
+    }
+
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          title: Text(isEdit ? 'Edit Siswa' : 'Tambah Siswa'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(controller: namaC, decoration: const InputDecoration(labelText: 'Nama Siswa', border: OutlineInputBorder()), textCapitalization: TextCapitalization.words),
-                const SizedBox(height: 12),
-                TextField(controller: nisC, decoration: const InputDecoration(labelText: 'NIS', border: OutlineInputBorder()), keyboardType: TextInputType.number),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  initialValue: jk,
-                  decoration: const InputDecoration(labelText: 'Jenis Kelamin', border: OutlineInputBorder()),
-                  items: const [
-                    DropdownMenuItem(value: 'L', child: Text('Laki-laki')),
-                    DropdownMenuItem(value: 'P', child: Text('Perempuan')),
-                  ],
-                  onChanged: (v) => setDialogState(() => jk = v!),
-                ),
-                const SizedBox(height: 12),
-                TextField(controller: kelasC, decoration: const InputDecoration(labelText: 'Kelas (contoh: VII-A)', border: OutlineInputBorder())),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  initialValue: sekolah.isNotEmpty ? sekolah : null,
-                  decoration: const InputDecoration(labelText: 'Sekolah', border: OutlineInputBorder()),
-                  items: _sekolahList.map<DropdownMenuItem<String>>((s) => DropdownMenuItem(value: s['nama'], child: Text(s['nama'], overflow: TextOverflow.ellipsis))).toList(),
-                  onChanged: (v) => setDialogState(() => sekolah = v!),
-                ),
-              ],
+        builder: (ctx, setDialogState) {
+          final classes = getClassesForSekolah(sekolah);
+          if (selectedKelas.isNotEmpty && !classes.contains(selectedKelas)) {
+             // Keep it if it was manually entered before, but show it in the list
+          }
+
+          return AlertDialog(
+            title: Text(isEdit ? 'Edit Siswa' : 'Tambah Siswa'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(controller: namaC, decoration: const InputDecoration(labelText: 'Nama Siswa', border: OutlineInputBorder()), textCapitalization: TextCapitalization.words),
+                  const SizedBox(height: 12),
+                  TextField(controller: nisC, decoration: const InputDecoration(labelText: 'NIS', border: OutlineInputBorder()), keyboardType: TextInputType.number),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    initialValue: jk,
+                    decoration: const InputDecoration(labelText: 'Jenis Kelamin', border: OutlineInputBorder()),
+                    items: const [
+                      DropdownMenuItem(value: 'L', child: Text('Laki-laki')),
+                      DropdownMenuItem(value: 'P', child: Text('Perempuan')),
+                    ],
+                    onChanged: (v) => setDialogState(() => jk = v!),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    initialValue: sekolah.isNotEmpty ? sekolah : null,
+                    decoration: const InputDecoration(labelText: 'Sekolah', border: OutlineInputBorder()),
+                    items: _sekolahList.map<DropdownMenuItem<String>>((s) => DropdownMenuItem(value: s['nama'], child: Text(s['nama'], overflow: TextOverflow.ellipsis))).toList(),
+                    onChanged: (v) => setDialogState(() {
+                      sekolah = v!;
+                      selectedKelas = ''; // Reset kelas when sekolah changes
+                    }),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    initialValue: selectedKelas.isNotEmpty ? selectedKelas : null,
+                    decoration: const InputDecoration(labelText: 'Kelas', border: OutlineInputBorder()),
+                    items: classes.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                    onChanged: (v) => setDialogState(() => selectedKelas = v!),
+                  ),
+                ],
+              ),
             ),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
-            FilledButton(
-              onPressed: () async {
-                if (namaC.text.isEmpty || nisC.text.isEmpty || kelasC.text.isEmpty || sekolah.isEmpty) {
-                  return;
-                }
-                Navigator.pop(ctx);
-                setState(() => _isLoading = true);
-                if (isEdit) {
-                  await _apiService.updateSiswa(siswa['rowKey'], namaC.text, nisC.text, jk, kelasC.text, sekolah);
-                } else {
-                  await _apiService.addSiswa(namaC.text, nisC.text, jk, kelasC.text, sekolah);
-                }
-                _loadData();
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(isEdit ? 'Siswa diperbarui' : 'Siswa ditambahkan')));
-                }
-              },
-              child: Text(isEdit ? 'Simpan' : 'Tambah'),
-            ),
-          ],
-        ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+              FilledButton(
+                onPressed: () async {
+                  if (namaC.text.isEmpty || nisC.text.isEmpty || selectedKelas.isEmpty || sekolah.isEmpty) {
+                    return;
+                  }
+                  Navigator.pop(ctx);
+                  setState(() => _isLoading = true);
+                  if (isEdit) {
+                    await _apiService.updateSiswa(siswa['rowKey'], namaC.text, nisC.text, jk, selectedKelas, sekolah);
+                  } else {
+                    await _apiService.addSiswa(namaC.text, nisC.text, jk, selectedKelas, sekolah);
+                  }
+                  _loadData();
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(isEdit ? 'Siswa diperbarui' : 'Siswa ditambahkan')));
+                  }
+                },
+                child: Text(isEdit ? 'Simpan' : 'Tambah'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
