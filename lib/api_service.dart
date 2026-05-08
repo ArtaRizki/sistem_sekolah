@@ -3,11 +3,8 @@ import 'dart:developer';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  // Switch this to your production URL when ready
-  static const String baseUrl = 'http://127.0.0.1:8000/api';
-  
-  // Keep the old GAS URL for reference
-  // static const String gasUrl = 'https://script.google.com/macros/s/AKfycbwBN4DkmIy4slzlFd703utieZl1RGh8jhrEOkxZ4JbMvnEfH6hp-keA9MApQSahWidZoQ/exec';
+  static const String baseUrl =
+      'https://script.google.com/macros/s/AKfycbwBN4DkmIy4slzlFd703utieZl1RGh8jhrEOkxZ4JbMvnEfH6hp-keA9MApQSahWidZoQ/exec';
 
   void _log(String method, Uri url, {String? requestBody, http.Response? response, Object? error}) {
     log('🚀 [API REQUEST] $method: $url');
@@ -21,11 +18,27 @@ class ApiService {
   }
 
   // ==========================================
-  // READ (GET) ENDPOINTS
+  // GENERIC POST HELPER
+  // ==========================================
+  Future<Map<String, dynamic>> _postAction(Map<String, dynamic> body) async {
+    final url = Uri.parse(baseUrl);
+    final encoded = jsonEncode(body);
+    try {
+      final response = await http.post(url, body: encoded);
+      _log('POST', url, requestBody: encoded, response: response);
+      return jsonDecode(response.body);
+    } catch (e) {
+      _log('POST', url, requestBody: encoded, error: e);
+      return {'status': 'error', 'message': e.toString()};
+    }
+  }
+
+  // ==========================================
+  // READ (GET) ENDPOINTS — filtered by sekolah
   // ==========================================
   Future<Map<String, dynamic>> getDashboard({String? sekolah}) async {
-    final s = sekolah != null ? '?sekolah=${Uri.encodeComponent(sekolah)}' : '';
-    final url = Uri.parse('$baseUrl/dashboard$s');
+    final s = sekolah != null ? '&sekolah=${Uri.encodeComponent(sekolah)}' : '';
+    final url = Uri.parse('$baseUrl?action=getDashboard$s');
     try {
       final response = await http.get(url);
       _log('GET', url, response: response);
@@ -37,8 +50,8 @@ class ApiService {
   }
 
   Future<List<dynamic>> getGuru({String? sekolah}) async {
-    final s = sekolah != null ? '?sekolah=${Uri.encodeComponent(sekolah)}' : '';
-    final url = Uri.parse('$baseUrl/gurus$s');
+    final s = sekolah != null ? '&sekolah=${Uri.encodeComponent(sekolah)}' : '';
+    final url = Uri.parse('$baseUrl?action=getGuru$s');
     try {
       final response = await http.get(url);
       _log('GET', url, response: response);
@@ -50,11 +63,10 @@ class ApiService {
   }
 
   Future<List<dynamic>> getSiswa({String? kelas, String? sekolah}) async {
-    var params = [];
-    if (kelas != null && kelas.isNotEmpty) params.add('kelas=${Uri.encodeComponent(kelas)}');
-    if (sekolah != null) params.add('sekolah=${Uri.encodeComponent(sekolah)}');
-    final query = params.isNotEmpty ? '?${params.join('&')}' : '';
-    final url = Uri.parse('$baseUrl/siswas$query');
+    var params = 'action=getSiswa';
+    if (kelas != null && kelas.isNotEmpty) params += '&kelas=${Uri.encodeComponent(kelas)}';
+    if (sekolah != null) params += '&sekolah=${Uri.encodeComponent(sekolah)}';
+    final url = Uri.parse('$baseUrl?$params');
     try {
       final response = await http.get(url);
       _log('GET', url, response: response);
@@ -66,8 +78,8 @@ class ApiService {
   }
 
   Future<List<dynamic>> getMapel({String? sekolah}) async {
-    final s = sekolah != null ? '?sekolah=${Uri.encodeComponent(sekolah)}' : '';
-    final url = Uri.parse('$baseUrl/mapels$s');
+    final s = sekolah != null ? '&sekolah=${Uri.encodeComponent(sekolah)}' : '';
+    final url = Uri.parse('$baseUrl?action=getMapel$s');
     try {
       final response = await http.get(url);
       _log('GET', url, response: response);
@@ -79,7 +91,7 @@ class ApiService {
   }
 
   Future<List<dynamic>> getSekolah() async {
-    final url = Uri.parse('$baseUrl/sekolahs');
+    final url = Uri.parse('$baseUrl?action=getSekolah');
     try {
       final response = await http.get(url);
       _log('GET', url, response: response);
@@ -91,8 +103,8 @@ class ApiService {
   }
 
   Future<List<dynamic>> getKelas({String? sekolah}) async {
-    final s = sekolah != null ? '?sekolah=${Uri.encodeComponent(sekolah)}' : '';
-    final url = Uri.parse('$baseUrl/kelas$s');
+    final s = sekolah != null ? '&sekolah=${Uri.encodeComponent(sekolah)}' : '';
+    final url = Uri.parse('$baseUrl?action=getKelas$s');
     try {
       final response = await http.get(url);
       _log('GET', url, response: response);
@@ -104,8 +116,8 @@ class ApiService {
   }
 
   Future<List<dynamic>> getSiswaWajah({String? sekolah}) async {
-    final s = sekolah != null ? '?sekolah=${Uri.encodeComponent(sekolah)}' : '';
-    final url = Uri.parse('$baseUrl/faces/registered$s');
+    final s = sekolah != null ? '&sekolah=${Uri.encodeComponent(sekolah)}' : '';
+    final url = Uri.parse('$baseUrl?action=getSiswaWajah$s');
     try {
       final response = await http.get(url);
       _log('GET', url, response: response);
@@ -117,9 +129,8 @@ class ApiService {
   }
 
   Future<List<dynamic>> getNilai(String mapel, {String? sekolah}) async {
-    // Note: this might need adjustment if mapel is an ID or Name
     final s = sekolah != null ? '&sekolah=${Uri.encodeComponent(sekolah)}' : '';
-    final url = Uri.parse('$baseUrl/nilais?mapel=${Uri.encodeComponent(mapel)}$s');
+    final url = Uri.parse('$baseUrl?action=getNilai&mapel=${Uri.encodeComponent(mapel)}$s');
     try {
       final response = await http.get(url);
       _log('GET', url, response: response);
@@ -132,7 +143,7 @@ class ApiService {
 
   Future<List<dynamic>> getRekap(String bulan, {String? sekolah}) async {
     final s = sekolah != null ? '&sekolah=${Uri.encodeComponent(sekolah)}' : '';
-    final url = Uri.parse('$baseUrl/attendance/rekap?bulan=${Uri.encodeComponent(bulan)}$s');
+    final url = Uri.parse('$baseUrl?action=getRekap&bulan=${Uri.encodeComponent(bulan)}$s');
     try {
       final response = await http.get(url);
       _log('GET', url, response: response);
@@ -144,72 +155,82 @@ class ApiService {
   }
 
   // ==========================================
-  // CRUD OPERATIONS
+  // GURU CRUD (with sekolah)
   // ==========================================
+  Future<Map<String, dynamic>> addGuru(String nama, String nip, String mapel, String sekolah) =>
+      _postAction({'action': 'addGuru', 'nama': nama, 'nip': nip, 'mapel': mapel, 'sekolah': sekolah});
 
-  Future<Map<String, dynamic>> addGuru(String nama, String nip, String mapel, String sekolah) async {
-    final url = Uri.parse('$baseUrl/gurus');
-    final body = jsonEncode({'nama': nama, 'nip': nip, 'mapel': mapel, 'sekolah': sekolah});
-    final response = await http.post(url, body: body, headers: {'Content-Type': 'application/json'});
-    return jsonDecode(response.body);
-  }
+  Future<Map<String, dynamic>> updateGuru(String rowKey, String nama, String nip, String mapel, String sekolah) =>
+      _postAction({'action': 'updateGuru', 'rowKey': rowKey, 'nama': nama, 'nip': nip, 'mapel': mapel, 'sekolah': sekolah});
 
-  Future<Map<String, dynamic>> updateGuru(String id, String nama, String nip, String mapel, String sekolah) async {
-    final url = Uri.parse('$baseUrl/gurus/$id');
-    final body = jsonEncode({'nama': nama, 'nip': nip, 'mapel': mapel, 'sekolah': sekolah});
-    final response = await http.put(url, body: body, headers: {'Content-Type': 'application/json'});
-    return jsonDecode(response.body);
-  }
+  Future<Map<String, dynamic>> deleteGuru(String rowKey) =>
+      _postAction({'action': 'deleteGuru', 'rowKey': rowKey});
 
-  Future<Map<String, dynamic>> deleteGuru(String id) async {
-    final url = Uri.parse('$baseUrl/gurus/$id');
-    final response = await http.delete(url);
-    return jsonDecode(response.body);
-  }
+  // ==========================================
+  // SISWA CRUD (with sekolah)
+  // ==========================================
+  Future<Map<String, dynamic>> addSiswa(String nama, String nis, String jk, String kelas, String sekolah) =>
+      _postAction({'action': 'addSiswa', 'nama': nama, 'nis': nis, 'jk': jk, 'kelas': kelas, 'sekolah': sekolah});
 
-  Future<Map<String, dynamic>> addSiswa(String nama, String nis, String jk, String kelas, String sekolah) async {
-    final url = Uri.parse('$baseUrl/siswas');
-    final body = jsonEncode({'nama': nama, 'nis': nis, 'jk': jk, 'kelas': kelas, 'sekolah': sekolah});
-    final response = await http.post(url, body: body, headers: {'Content-Type': 'application/json'});
-    return jsonDecode(response.body);
-  }
+  Future<Map<String, dynamic>> updateSiswa(String rowKey, String nama, String nis, String jk, String kelas, String sekolah) =>
+      _postAction({'action': 'updateSiswa', 'rowKey': rowKey, 'nama': nama, 'nis': nis, 'jk': jk, 'kelas': kelas, 'sekolah': sekolah});
 
-  Future<Map<String, dynamic>> updateSiswa(String id, String nama, String nis, String jk, String kelas, String sekolah) async {
-    final url = Uri.parse('$baseUrl/siswas/$id');
-    final body = jsonEncode({'nama': nama, 'nis': nis, 'jk': jk, 'kelas': kelas, 'sekolah': sekolah});
-    final response = await http.put(url, body: body, headers: {'Content-Type': 'application/json'});
-    return jsonDecode(response.body);
-  }
+  Future<Map<String, dynamic>> deleteSiswa(String rowKey) =>
+      _postAction({'action': 'deleteSiswa', 'rowKey': rowKey});
 
-  Future<Map<String, dynamic>> deleteSiswa(String id) async {
-    final url = Uri.parse('$baseUrl/siswas/$id');
-    final response = await http.delete(url);
-    return jsonDecode(response.body);
-  }
+  // ==========================================
+  // MAPEL CRUD (with sekolah assignment)
+  // ==========================================
+  Future<Map<String, dynamic>> addMapel(String nama, String kode, String sekolah) =>
+      _postAction({'action': 'addMapel', 'nama': nama, 'kode': kode, 'sekolah': sekolah});
 
-  // Mapel, Sekolah, Nilai CRUD follow similar pattern...
-  // For brevity, I'll implement only what's used in the UI screens we checked.
+  Future<Map<String, dynamic>> updateMapel(String oldNama, String nama, String kode, String sekolah) =>
+      _postAction({'action': 'updateMapel', 'oldNama': oldNama, 'nama': nama, 'kode': kode, 'sekolah': sekolah});
 
+  Future<Map<String, dynamic>> deleteMapel(String nama) =>
+      _postAction({'action': 'deleteMapel', 'nama': nama});
+
+  // ==========================================
+  // SEKOLAH CRUD
+  // ==========================================
+  Future<Map<String, dynamic>> addSekolah(String nama, String alamat, String tingkat) =>
+      _postAction({'action': 'addSekolah', 'nama': nama, 'alamat': alamat, 'tingkat': tingkat});
+
+  Future<Map<String, dynamic>> updateSekolah(String oldNama, String nama, String alamat, String tingkat) =>
+      _postAction({'action': 'updateSekolah', 'oldNama': oldNama, 'nama': nama, 'alamat': alamat, 'tingkat': tingkat});
+
+  Future<Map<String, dynamic>> deleteSekolah(String nama) =>
+      _postAction({'action': 'deleteSekolah', 'nama': nama});
+
+  // ==========================================
+  // NILAI CRUD (with sekolah)
+  // ==========================================
+  Future<Map<String, dynamic>> addNilai(String nama, String nis, String mapel, num nilai, String sekolah) =>
+      _postAction({'action': 'addNilai', 'nama': nama, 'nis': nis, 'mapel': mapel, 'nilai': nilai, 'sekolah': sekolah});
+
+  Future<Map<String, dynamic>> updateNilai(String rowKey, String nama, String nis, String mapel, num nilai, String sekolah) =>
+      _postAction({'action': 'updateNilai', 'rowKey': rowKey, 'nama': nama, 'nis': nis, 'mapel': mapel, 'nilai': nilai, 'sekolah': sekolah});
+
+  Future<Map<String, dynamic>> deleteNilai(String rowKey) =>
+      _postAction({'action': 'deleteNilai', 'rowKey': rowKey});
+
+  // ==========================================
+  // FACE & ATTENDANCE
+  // ==========================================
   Future<bool> registerFace(List<double> embedding, {String? id}) async {
-    final url = Uri.parse('$baseUrl/faces/register');
-    final body = jsonEncode({'nis': id, 'embedding': embedding});
-    final response = await http.post(url, body: body, headers: {'Content-Type': 'application/json'});
-    final result = jsonDecode(response.body);
+    final result = await _postAction({'action': 'registerFace', 'embedding': embedding, 'id': id});
     return result['status'] == 'success';
   }
 
   Future<bool> submitAttendance(List<double> embedding, double similarity, {String? name, String? sekolah}) async {
-    // Note: name here is used as NIS in our new controller, or we need to resolve it.
-    // Assuming 'name' contains NIS or we use a separate field.
-    final url = Uri.parse('$baseUrl/attendance/submit');
-    final body = jsonEncode({
-      'nis': name, // In Laravel we prefer NIS
+    final result = await _postAction({
+      'action': 'submitAttendance',
       'embedding': embedding,
       'similarity': similarity,
+      'nama': name ?? 'Unknown',
       'timestamp': DateTime.now().toIso8601String(),
+      'sekolah': sekolah ?? '',
     });
-    final response = await http.post(url, body: body, headers: {'Content-Type': 'application/json'});
-    final result = jsonDecode(response.body);
     return result['status'] == 'success';
   }
 }
