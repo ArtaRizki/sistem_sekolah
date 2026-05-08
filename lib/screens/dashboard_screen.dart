@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import '../api_service.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+  final String? sekolah;
+  const DashboardScreen({super.key, this.sekolah});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -19,9 +20,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _loadData();
   }
 
+  @override
+  void didUpdateWidget(covariant DashboardScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.sekolah != widget.sekolah) {
+      _loadData();
+    }
+  }
+
   Future<void> _loadData() async {
+    setState(() => _isLoading = true);
     try {
-      final data = await _apiService.getDashboard();
+      final data = await _apiService.getDashboard(sekolah: widget.sekolah);
       setState(() {
         _data = data;
         _isLoading = false;
@@ -35,15 +45,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Dashboard Sekolah',
+          'DRP Absensi',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: Color(0xFF1F2937),
@@ -86,9 +94,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   ),
                             ),
                             const SizedBox(height: 8),
-                            const Text(
-                              'Kelola data sekolah dengan mudah dan efisien',
-                              style: TextStyle(
+                            Text(
+                              widget.sekolah ?? 'Semua Sekolah',
+                              style: const TextStyle(
                                 color: Colors.white70,
                                 fontSize: 14,
                               ),
@@ -105,10 +113,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
                 const SizedBox(height: 32),
-  
-                // School Info Section
+
+                // Guru Info
                 Text(
-                  'Informasi Sekolah',
+                  'Informasi Guru',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: const Color(0xFF1F2937),
@@ -117,38 +125,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 const SizedBox(height: 16),
                 _buildInfoCard(
                   context,
-                  Icons.school_rounded,
-                  _data['sekolah'] ?? '-',
-                  'Nama Sekolah',
+                  Icons.person_rounded,
+                  _data['guru'] ?? '-',
+                  'Nama Guru',
                   const Color(0xFF6366F1),
                 ),
                 _buildInfoCard(
                   context,
-                  Icons.location_on_rounded,
-                  _data['alamat'] ?? '-',
-                  'Alamat',
-                  const Color(0xFF8B5CF6),
-                ),
-                _buildInfoCard(
-                  context,
                   Icons.email_rounded,
-                  'info@sditalfahmi.sch.id',
+                  'dherirama@gmail.com',
                   'Email',
                   const Color(0xFF06B6D4),
                 ),
-                _buildInfoCard(
-                  context,
-                  Icons.phone_rounded,
-                  '(0451) 123456',
-                  'Telepon',
-                  const Color(0xFF10B981),
-                ),
-  
+
                 const SizedBox(height: 32),
-  
+
                 // Statistics Section
                 Text(
-                  'Statistik Sekolah',
+                  'Statistik',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: const Color(0xFF1F2937),
@@ -158,41 +152,65 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 GridView.count(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  crossAxisCount: MediaQuery.of(context).size.width > 600 ? 3 : 2,
+                  crossAxisCount: MediaQuery.of(context).size.width > 600
+                      ? 4
+                      : 2,
                   crossAxisSpacing: 16,
                   mainAxisSpacing: 16,
                   children: [
                     _buildStatCard(
                       context,
-                      'Total Siswa',
+                      'Siswa',
                       _data['totalSiswa']?.toString() ?? '0',
                       const Color(0xFF3B82F6),
                       Icons.people_rounded,
                     ),
                     _buildStatCard(
                       context,
-                      'Total Guru',
+                      'Guru',
                       _data['totalGuru']?.toString() ?? '0',
                       const Color(0xFF8B5CF6),
                       Icons.person_rounded,
                     ),
                     _buildStatCard(
                       context,
-                      'Total Kelas',
-                      _data['totalKelas']?.toString() ?? '0',
+                      'Sekolah',
+                      _data['totalSekolah']?.toString() ?? '0',
                       const Color(0xFF06B6D4),
-                      Icons.class_rounded,
+                      Icons.school_rounded,
                     ),
-                    if (MediaQuery.of(context).size.width > 600)
-                      _buildStatCard(
-                        context,
-                        'Kehadiran',
-                        '95%',
-                        const Color(0xFF10B981),
-                        Icons.check_circle_rounded,
-                      ),
+                    _buildStatCard(
+                      context,
+                      'Mapel',
+                      _data['totalMapel']?.toString() ?? '0',
+                      const Color(0xFF10B981),
+                      Icons.menu_book_rounded,
+                    ),
                   ],
                 ),
+
+                // Sekolah list
+                if (_data['sekolah'] is List &&
+                    (_data['sekolah'] as List).isNotEmpty) ...[
+                  const SizedBox(height: 32),
+                  Text(
+                    'Daftar Sekolah',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF1F2937),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ...(_data['sekolah'] as List).map(
+                    (s) => _buildInfoCard(
+                      context,
+                      Icons.school_rounded,
+                      s['nama'] ?? '-',
+                      s['alamat'] ?? '-',
+                      const Color(0xFF8B5CF6),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

@@ -2,15 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import '../api_service.dart';
 
 class RekapScreen extends StatefulWidget {
-  const RekapScreen({super.key});
+  final String? sekolah;
+  const RekapScreen({super.key, this.sekolah});
 
   @override
   State<RekapScreen> createState() => _RekapScreenState();
 }
 
 class _RekapScreenState extends State<RekapScreen> {
+  final ApiService _apiService = ApiService();
+  bool _isLoading = true;
   String _selectedBulan = 'Mei 2026';
   final List<String> _bulanList = [
     'Januari 2026',
@@ -20,13 +24,35 @@ class _RekapScreenState extends State<RekapScreen> {
     'Mei 2026',
   ];
 
-  final List<Map<String, dynamic>> _rekapData = [
-    {'kelas': 'Kelas 1A', 'hadir': 95, 'izin': 3, 'sakit': 2, 'alpa': 0},
-    {'kelas': 'Kelas 1B', 'hadir': 92, 'izin': 5, 'sakit': 2, 'alpa': 1},
-    {'kelas': 'Kelas 2A', 'hadir': 98, 'izin': 1, 'sakit': 1, 'alpa': 0},
-    {'kelas': 'Kelas 3A', 'hadir': 90, 'izin': 4, 'sakit': 4, 'alpa': 2},
-    {'kelas': 'Kelas 4A', 'hadir': 96, 'izin': 2, 'sakit': 2, 'alpa': 0},
-  ];
+  List<dynamic> _rekapData = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRekap();
+  }
+
+  @override
+  void didUpdateWidget(covariant RekapScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.sekolah != widget.sekolah) {
+      _loadRekap();
+    }
+  }
+
+  Future<void> _loadRekap() async {
+    setState(() => _isLoading = true);
+    try {
+      final data = await _apiService.getRekap(_selectedBulan, sekolah: widget.sekolah);
+      setState(() {
+        _rekapData = data;
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint("Error loading rekap: $e");
+      setState(() => _isLoading = false);
+    }
+  }
 
   Future<void> _generatePdf() async {
     final pdf = pw.Document();
@@ -55,21 +81,23 @@ class _RekapScreenState extends State<RekapScreen> {
                 context: context,
                 headers: [
                   'No',
-                  'Kelas',
-                  'Hadir (%)',
-                  'Izin (%)',
-                  'Sakit (%)',
-                  'Alpa (%)',
+                  'Nama',
+                  'Hadir',
+                  'Izin',
+                  'Sakit',
+                  'Alpa',
+                  'Kehadiran (%)',
                 ],
                 data: List<List<String>>.generate(_rekapData.length, (index) {
                   final data = _rekapData[index];
                   return [
                     '${index + 1}',
-                    data['kelas'].toString(),
-                    '${data['hadir']}%',
-                    '${data['izin']}%',
-                    '${data['sakit']}%',
-                    '${data['alpa']}%',
+                    data['nama'].toString(),
+                    '${data['hadir']}',
+                    '${data['izin']}',
+                    '${data['sakit']}',
+                    '${data['alpa']}',
+                    '${data['persen']}%',
                   ];
                 }),
                 headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
@@ -181,6 +209,7 @@ class _RekapScreenState extends State<RekapScreen> {
                     onChanged: (String? newValue) {
                       if (newValue != null) {
                         setState(() => _selectedBulan = newValue);
+                        _loadRekap();
                       }
                     },
                   ),
@@ -189,13 +218,25 @@ class _RekapScreenState extends State<RekapScreen> {
             ),
           ),
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              itemCount: _rekapData.length,
-              itemBuilder: (context, index) {
-                final data = _rekapData[index];
-                return _buildRekapCard(context, data);
-              },
+            child: RefreshIndicator(
+              onRefresh: _loadRekap,
+              child: _isLoading 
+                ? const Center(child: CircularProgressIndicator())
+                : _rekapData.isEmpty 
+                  ? Center(
+                      child: Text(
+                        'Data tidak tersedia',
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      itemCount: _rekapData.length,
+                      itemBuilder: (context, index) {
+                        final data = _rekapData[index];
+                        return _buildRekapCard(context, data);
+                      },
+                    ),
             ),
           ),
         ],
@@ -237,13 +278,23 @@ class _RekapScreenState extends State<RekapScreen> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                Text(
-                  data['kelas'],
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1F2937),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        data['nama'] ?? '-',
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1F2937)),
+                      ),
+                      if (data['sekolah'] != null && data['sekolah'].toString().isNotEmpty)
+                        Text(data['sekolah'], style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+                    ],
                   ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(color: Colors.green.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+                  child: Text('${data['persen'] ?? 0}%', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.green)),
                 ),
               ],
             ),
@@ -256,10 +307,10 @@ class _RekapScreenState extends State<RekapScreen> {
               crossAxisSpacing: 8,
               childAspectRatio: 1,
               children: [
-                _buildStatBubble('Hadir', '${data['hadir']}%', Colors.green),
-                _buildStatBubble('Izin', '${data['izin']}%', Colors.blue),
-                _buildStatBubble('Sakit', '${data['sakit']}%', Colors.orange),
-                _buildStatBubble('Alpa', '${data['alpa']}%', Colors.red),
+                _buildStatBubble('Hadir', '${data['hadir'] ?? 0}', Colors.green),
+                _buildStatBubble('Izin', '${data['izin'] ?? 0}', Colors.blue),
+                _buildStatBubble('Sakit', '${data['sakit'] ?? 0}', Colors.orange),
+                _buildStatBubble('Alpa', '${data['alpa'] ?? 0}', Colors.red),
               ],
             ),
           ],

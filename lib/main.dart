@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'api_service.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/guru_screen.dart';
 import 'screens/siswa_screen.dart';
+import 'screens/mapel_screen.dart';
+import 'screens/sekolah_screen.dart';
 import 'screens/nilai_screen.dart';
 import 'screens/rekap_screen.dart';
 import 'screens/absensi_wajah_screen.dart';
@@ -16,7 +19,7 @@ class SistemSekolahApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Sistem Sekolah',
+      title: 'DRP Absensi',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
@@ -63,62 +66,173 @@ class MainLayout extends StatefulWidget {
 
 class _MainLayoutState extends State<MainLayout> {
   int _selectedIndex = 0;
+  String? _selectedSekolah; // Global sekolah filter
+  List<dynamic> _sekolahList = [];
+  final ApiService _apiService = ApiService();
 
-  final List<Widget> _pages = [
-    const DashboardScreen(),
-    const GuruScreen(),
-    const SiswaScreen(),
-    const NilaiScreen(),
-    const RekapScreen(),
+  @override
+  void initState() {
+    super.initState();
+    _loadSekolahList();
+  }
+
+  Future<void> _loadSekolahList() async {
+    try {
+      final data = await _apiService.getSekolah();
+      debugPrint('📋 Loaded ${data.length} sekolah: $data');
+      if (mounted) {
+        setState(() {
+          _sekolahList = data;
+        });
+      }
+    } catch (e) {
+      debugPrint('❌ Error loading sekolah list: $e');
+    }
+  }
+
+  List<Widget> _buildPages() => [
+    DashboardScreen(sekolah: _selectedSekolah),
+    MapelScreen(sekolah: _selectedSekolah),
+    GuruScreen(sekolah: _selectedSekolah),
+    SekolahScreen(onSekolahChanged: _loadSekolahList),
+    SiswaScreen(sekolah: _selectedSekolah),
+    NilaiScreen(sekolah: _selectedSekolah),
+    RekapScreen(sekolah: _selectedSekolah),
     const AbsensiWajahScreen(),
   ];
 
   final List<NavigationRailDestination> _navDestinations = const [
-    NavigationRailDestination(
-      icon: Icon(Icons.home_rounded),
-      label: Text('Dashboard'),
-    ),
-    NavigationRailDestination(
-      icon: Icon(Icons.person_rounded),
-      label: Text('Guru'),
-    ),
-    NavigationRailDestination(
-      icon: Icon(Icons.people_rounded),
-      label: Text('Siswa'),
-    ),
-    NavigationRailDestination(
-      icon: Icon(Icons.assessment_rounded),
-      label: Text('Nilai'),
-    ),
-    NavigationRailDestination(
-      icon: Icon(Icons.bar_chart_rounded),
-      label: Text('Rekap'),
-    ),
-    NavigationRailDestination(
-      icon: Icon(Icons.face_rounded),
-      label: Text('Absensi'),
-    ),
+    NavigationRailDestination(icon: Icon(Icons.home_rounded), label: Text('Dashboard')),
+    NavigationRailDestination(icon: Icon(Icons.menu_book_rounded), label: Text('Mapel')),
+    NavigationRailDestination(icon: Icon(Icons.person_rounded), label: Text('Guru')),
+    NavigationRailDestination(icon: Icon(Icons.school_rounded), label: Text('Sekolah')),
+    NavigationRailDestination(icon: Icon(Icons.people_rounded), label: Text('Siswa')),
+    NavigationRailDestination(icon: Icon(Icons.assessment_rounded), label: Text('Nilai')),
+    NavigationRailDestination(icon: Icon(Icons.bar_chart_rounded), label: Text('Rekap')),
+    NavigationRailDestination(icon: Icon(Icons.face_rounded), label: Text('Absensi')),
   ];
+
+  void _showSekolahPicker() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        List<dynamic> sheetList = List.from(_sekolahList);
+        bool isLoadingSheet = sheetList.isEmpty;
+
+        // If list is empty, fetch fresh data inside the sheet
+        return StatefulBuilder(
+          builder: (ctx2, setSheetState) {
+            if (isLoadingSheet) {
+              _apiService.getSekolah().then((data) {
+                setSheetState(() {
+                  sheetList = data;
+                  isLoadingSheet = false;
+                });
+                // Also update parent state
+                setState(() => _sekolahList = data);
+              });
+            }
+
+            return SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    margin: const EdgeInsets.only(top: 12),
+                    width: 40, height: 4,
+                    decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Text('Pilih Sekolah', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1F2937))),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.all_inclusive_rounded, color: Color(0xFF6366F1)),
+                    title: const Text('Semua Sekolah', style: TextStyle(fontWeight: FontWeight.w600)),
+                    trailing: _selectedSekolah == null ? const Icon(Icons.check_rounded, color: Color(0xFF6366F1)) : null,
+                    onTap: () {
+                      setState(() => _selectedSekolah = null);
+                      Navigator.pop(ctx);
+                    },
+                  ),
+                  if (isLoadingSheet)
+                    const Padding(
+                      padding: EdgeInsets.all(24),
+                      child: CircularProgressIndicator(),
+                    ),
+                  ...sheetList.map((s) => ListTile(
+                    leading: const Icon(Icons.school_rounded, color: Color(0xFF8B5CF6)),
+                    title: Text(s['nama'] ?? '-'),
+                    subtitle: Text(s['alamat'] ?? '-', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+                    trailing: _selectedSekolah == s['nama'] ? const Icon(Icons.check_rounded, color: Color(0xFF6366F1)) : null,
+                    onTap: () {
+                      setState(() => _selectedSekolah = s['nama']);
+                      Navigator.pop(ctx);
+                    },
+                  )),
+                  const SizedBox(height: 16),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildSekolahSelector() {
+    return GestureDetector(
+      onTap: _showSekolahPicker,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: const Color(0xFF6366F1).withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFF6366F1).withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.school_rounded, size: 16, color: Color(0xFF6366F1)),
+            const SizedBox(width: 6),
+            Text(
+              _selectedSekolah ?? 'Semua Sekolah',
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF6366F1)),
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(width: 4),
+            const Icon(Icons.arrow_drop_down_rounded, size: 18, color: Color(0xFF6366F1)),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDesktop = MediaQuery.of(context).size.width >= 800;
+    final pages = _buildPages();
 
     return Scaffold(
       appBar: isDesktop
           ? null
           : AppBar(
               title: const Text(
-                'Sistem Sekolah',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                  color: Color(0xFF1F2937),
-                ),
+                'DRP Absensi',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Color(0xFF1F2937)),
               ),
               elevation: 0,
               backgroundColor: Colors.white,
               surfaceTintColor: Colors.transparent,
+              actions: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: _buildSekolahSelector(),
+                ),
+              ],
             ),
       drawer: isDesktop
           ? null
@@ -129,29 +243,20 @@ class _MainLayoutState extends State<MainLayout> {
                   DrawerHeader(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [
-                          const Color(0xFF6366F1),
-                          const Color(0xFF8B5CF6),
-                        ],
+                        colors: [const Color(0xFF6366F1), const Color(0xFF8B5CF6)],
                       ),
                     ),
-                    child: const Column(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        Icon(
-                          Icons.school_rounded,
-                          size: 40,
-                          color: Colors.white,
-                        ),
-                        SizedBox(height: 8),
+                        const Icon(Icons.school_rounded, size: 40, color: Colors.white),
+                        const SizedBox(height: 8),
+                        const Text('DRP Absensi', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 4),
                         Text(
-                          'Sistem Sekolah',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          _selectedSekolah ?? 'Semua Sekolah',
+                          style: const TextStyle(color: Colors.white70, fontSize: 12),
                         ),
                       ],
                     ),
@@ -161,12 +266,8 @@ class _MainLayoutState extends State<MainLayout> {
                       leading: _navDestinations[i].icon,
                       title: _navDestinations[i].label,
                       selected: _selectedIndex == i,
-                      selectedTileColor: const Color(
-                        0xFF6366F1,
-                      ).withValues(alpha: 0.1),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      selectedTileColor: const Color(0xFF6366F1).withValues(alpha: 0.1),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       onTap: () {
                         setState(() => _selectedIndex = i);
                         Navigator.pop(context);
@@ -182,9 +283,7 @@ class _MainLayoutState extends State<MainLayout> {
               width: 280,
               decoration: BoxDecoration(
                 color: Colors.white,
-                border: Border(
-                  right: BorderSide(color: Colors.grey[200]!, width: 1),
-                ),
+                border: Border(right: BorderSide(color: Colors.grey[200]!, width: 1)),
               ),
               child: Column(
                 children: [
@@ -197,28 +296,17 @@ class _MainLayoutState extends State<MainLayout> {
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: [
-                                const Color(0xFF6366F1),
-                                const Color(0xFF8B5CF6),
-                              ],
+                              colors: [const Color(0xFF6366F1), const Color(0xFF8B5CF6)],
                             ),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(
-                            Icons.school_rounded,
-                            size: 28,
-                            color: Colors.white,
-                          ),
+                          child: const Icon(Icons.school_rounded, size: 28, color: Colors.white),
                         ),
                         const SizedBox(height: 12),
-                        const Text(
-                          'Sistem Sekolah',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1F2937),
-                          ),
-                        ),
+                        const Text('DRP Absensi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1F2937))),
+                        const SizedBox(height: 12),
+                        // Sekolah selector in sidebar
+                        _buildSekolahSelector(),
                       ],
                     ),
                   ),
@@ -233,50 +321,26 @@ class _MainLayoutState extends State<MainLayout> {
                           child: Material(
                             color: Colors.transparent,
                             child: InkWell(
-                              onTap: () {
-                                setState(() => _selectedIndex = index);
-                              },
+                              onTap: () => setState(() => _selectedIndex = index),
                               borderRadius: BorderRadius.circular(12),
                               child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 12,
-                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                                 decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? const Color(
-                                          0xFF6366F1,
-                                        ).withValues(alpha: 0.1)
-                                      : Colors.transparent,
+                                  color: isSelected ? const Color(0xFF6366F1).withValues(alpha: 0.1) : Colors.transparent,
                                   borderRadius: BorderRadius.circular(12),
-                                  border: isSelected
-                                      ? Border.all(
-                                          color: const Color(0xFF6366F1),
-                                          width: 1.5,
-                                        )
-                                      : null,
+                                  border: isSelected ? Border.all(color: const Color(0xFF6366F1), width: 1.5) : null,
                                 ),
                                 child: Row(
                                   children: [
-                                    Icon(
-                                      _getIconData(index),
-                                      size: 22,
-                                      color: isSelected
-                                          ? const Color(0xFF6366F1)
-                                          : Colors.grey[600],
-                                    ),
+                                    Icon(_getIconData(index), size: 22, color: isSelected ? const Color(0xFF6366F1) : Colors.grey[600]),
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: Text(
                                         _getLabel(index),
                                         style: TextStyle(
                                           fontSize: 14,
-                                          fontWeight: isSelected
-                                              ? FontWeight.w600
-                                              : FontWeight.w500,
-                                          color: isSelected
-                                              ? const Color(0xFF6366F1)
-                                              : Colors.grey[600],
+                                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                                          color: isSelected ? const Color(0xFF6366F1) : Colors.grey[600],
                                         ),
                                       ),
                                     ),
@@ -292,7 +356,7 @@ class _MainLayoutState extends State<MainLayout> {
                 ],
               ),
             ),
-          Expanded(child: _pages[_selectedIndex]),
+          Expanded(child: pages[_selectedIndex]),
         ],
       ),
     );
@@ -300,18 +364,14 @@ class _MainLayoutState extends State<MainLayout> {
 
   IconData _getIconData(int index) {
     const icons = [
-      Icons.home_rounded,
-      Icons.person_rounded,
-      Icons.people_rounded,
-      Icons.assessment_rounded,
-      Icons.bar_chart_rounded,
-      Icons.face_rounded,
+      Icons.home_rounded, Icons.menu_book_rounded, Icons.person_rounded, Icons.school_rounded,
+      Icons.people_rounded, Icons.assessment_rounded, Icons.bar_chart_rounded, Icons.face_rounded,
     ];
     return icons[index];
   }
 
   String _getLabel(int index) {
-    const labels = ['Dashboard', 'Guru', 'Siswa', 'Nilai', 'Rekap', 'Absensi'];
+    const labels = ['Dashboard', 'Mapel', 'Guru', 'Sekolah', 'Siswa', 'Nilai', 'Rekap', 'Absensi'];
     return labels[index];
   }
 }

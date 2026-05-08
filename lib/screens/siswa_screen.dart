@@ -1,156 +1,214 @@
 import 'package:flutter/material.dart';
+import '../api_service.dart';
 
 class SiswaScreen extends StatefulWidget {
-  const SiswaScreen({super.key});
+  final String? sekolah;
+  const SiswaScreen({super.key, this.sekolah});
 
   @override
   State<SiswaScreen> createState() => _SiswaScreenState();
 }
 
 class _SiswaScreenState extends State<SiswaScreen> {
-  String _selectedKelas = 'Kelas 1A';
-  final List<String> _kelasList = [
-    'Kelas 1A',
-    'Kelas 1B',
-    'Kelas 2A',
-    'Kelas 3A',
-    'Kelas 4A',
-    'Kelas 5A',
-    'Kelas 6A',
-  ];
-
-  final Map<String, List<Map<String, String>>> siswaData = {
-    'Kelas 1A': [
-      {'nama': 'Andi Susanto', 'nis': '2023001', 'jk': 'L'},
-      {'nama': 'Budi Setiawan', 'nis': '2023002', 'jk': 'L'},
-      {'nama': 'Citra Kirana', 'nis': '2023003', 'jk': 'P'},
-      {'nama': 'Dani Pratama', 'nis': '2023004', 'jk': 'L'},
-    ],
-    'Kelas 1B': [
-      {'nama': 'Deni Ramadhan', 'nis': '2023005', 'jk': 'L'},
-      {'nama': 'Eka Putri', 'nis': '2023006', 'jk': 'P'},
-    ],
-  };
+  final ApiService _apiService = ApiService();
+  bool _isLoading = true;
+  String? _selectedKelas;
+  List<String> _kelasList = [];
+  List<dynamic> _siswaList = [];
+  List<dynamic> _sekolahList = [];
 
   @override
-  Widget build(BuildContext context) {
-    final List<Map<String, String>> currentSiswa =
-        siswaData[_selectedKelas] ?? [];
+  void initState() {
+    super.initState();
+    _loadData();
+  }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Data Siswa',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1F2937),
-            fontSize: 24,
-          ),
-        ),
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        surfaceTintColor: Colors.transparent,
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(24.0),
+  @override
+  void didUpdateWidget(covariant SiswaScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.sekolah != widget.sekolah) {
+      _selectedKelas = null;
+      _loadData();
+    }
+  }
+
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+    try {
+      final kelasList = await _apiService.getKelas(sekolah: widget.sekolah);
+      final siswaList = await _apiService.getSiswa(kelas: _selectedKelas, sekolah: widget.sekolah);
+      final sekolahList = await _apiService.getSekolah();
+      setState(() {
+        _kelasList = kelasList.map<String>((e) => e.toString()).toList();
+        _siswaList = siswaList;
+        _sekolahList = sekolahList;
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint("Error: $e");
+      setState(() => _isLoading = false);
+    }
+  }
+
+  void _showSiswaDialog({Map<String, dynamic>? siswa}) {
+    final namaC = TextEditingController(text: siswa?['nama'] ?? '');
+    final nisC = TextEditingController(text: siswa?['nis'] ?? '');
+    final kelasC = TextEditingController(text: siswa?['kelas'] ?? '');
+    String jk = siswa?['jk'] ?? 'L';
+    String sekolah = siswa?['sekolah'] ?? widget.sekolah ?? (_sekolahList.isNotEmpty ? _sekolahList.first['nama'] : '');
+    final isEdit = siswa != null;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: Text(isEdit ? 'Edit Siswa' : 'Tambah Siswa'),
+          content: SingleChildScrollView(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  'Pilih Kelas',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey[700],
-                  ),
+                TextField(controller: namaC, decoration: const InputDecoration(labelText: 'Nama Siswa', border: OutlineInputBorder()), textCapitalization: TextCapitalization.words),
+                const SizedBox(height: 12),
+                TextField(controller: nisC, decoration: const InputDecoration(labelText: 'NIS', border: OutlineInputBorder()), keyboardType: TextInputType.number),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: jk,
+                  decoration: const InputDecoration(labelText: 'Jenis Kelamin', border: OutlineInputBorder()),
+                  items: const [
+                    DropdownMenuItem(value: 'L', child: Text('Laki-laki')),
+                    DropdownMenuItem(value: 'P', child: Text('Perempuan')),
+                  ],
+                  onChanged: (v) => setDialogState(() => jk = v!),
                 ),
-                const SizedBox(height: 8),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey[200]!, width: 1),
-                  ),
-                  child: DropdownButton<String>(
-                    isExpanded: true,
-                    value: _selectedKelas,
-                    underline: const SizedBox(),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    items: _kelasList.map((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.class_rounded,
-                              size: 18,
-                              color: Color(0xFF6366F1),
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              value,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (String? newValue) {
-                      if (newValue != null) {
-                        setState(() => _selectedKelas = newValue);
-                      }
-                    },
-                  ),
+                const SizedBox(height: 12),
+                TextField(controller: kelasC, decoration: const InputDecoration(labelText: 'Kelas (contoh: VII-A)', border: OutlineInputBorder())),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: sekolah.isNotEmpty ? sekolah : null,
+                  decoration: const InputDecoration(labelText: 'Sekolah', border: OutlineInputBorder()),
+                  items: _sekolahList.map<DropdownMenuItem<String>>((s) => DropdownMenuItem(value: s['nama'], child: Text(s['nama'], overflow: TextOverflow.ellipsis))).toList(),
+                  onChanged: (v) => setDialogState(() => sekolah = v!),
                 ),
               ],
             ),
           ),
-          Expanded(
-            child: currentSiswa.isEmpty
-                ? Center(
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+            FilledButton(
+              onPressed: () async {
+                if (namaC.text.isEmpty || nisC.text.isEmpty || kelasC.text.isEmpty || sekolah.isEmpty) {
+                  return;
+                }
+                Navigator.pop(ctx);
+                setState(() => _isLoading = true);
+                if (isEdit) {
+                  await _apiService.updateSiswa(siswa['rowKey'], namaC.text, nisC.text, jk, kelasC.text, sekolah);
+                } else {
+                  await _apiService.addSiswa(namaC.text, nisC.text, jk, kelasC.text, sekolah);
+                }
+                _loadData();
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(isEdit ? 'Siswa diperbarui' : 'Siswa ditambahkan')));
+                }
+              },
+              child: Text(isEdit ? 'Simpan' : 'Tambah'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _confirmDelete(String rowKey, String nama) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Hapus Siswa'),
+        content: Text('Yakin ingin menghapus "$nama"?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              setState(() => _isLoading = true);
+              await _apiService.deleteSiswa(rowKey);
+              _loadData();
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Siswa dihapus')));
+              }
+            },
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Data Siswa', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1F2937), fontSize: 24)),
+        elevation: 0, backgroundColor: Colors.transparent, surfaceTintColor: Colors.transparent,
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                if (_kelasList.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
-                          Icons.person_off_rounded,
-                          size: 60,
-                          color: Colors.grey[300],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Tidak ada siswa di kelas ini',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey[600],
+                        Text('Filter Kelas', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.grey[700])),
+                        const SizedBox(height: 8),
+                        Container(
+                          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey[200]!, width: 1)),
+                          child: DropdownButton<String>(
+                            isExpanded: true,
+                            value: _selectedKelas,
+                            hint: const Text('Semua Kelas'),
+                            underline: const SizedBox(),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            items: [
+                              const DropdownMenuItem<String>(value: null, child: Text('Semua Kelas')),
+                              ..._kelasList.map((k) => DropdownMenuItem(value: k, child: Row(children: [
+                                const Icon(Icons.class_rounded, size: 18, color: Color(0xFF6366F1)),
+                                const SizedBox(width: 12),
+                                Text(k, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                              ]))),
+                            ],
+                            onChanged: (v) {
+                              setState(() => _selectedKelas = v);
+                              _loadData();
+                            },
                           ),
                         ),
                       ],
                     ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 16,
-                    ),
-                    itemCount: currentSiswa.length,
-                    itemBuilder: (context, index) {
-                      final siswa = currentSiswa[index];
-                      return _buildSiswaCard(context, siswa);
-                    },
                   ),
-          ),
-        ],
-      ),
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: _loadData,
+                    child: _siswaList.isEmpty
+                        ? Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                            Icon(Icons.person_off_rounded, size: 60, color: Colors.grey[300]),
+                            const SizedBox(height: 16),
+                            Text('Tidak ada siswa', style: TextStyle(fontSize: 16, color: Colors.grey[600])),
+                          ]))
+                        : ListView.builder(
+                            padding: const EdgeInsets.all(24),
+                            itemCount: _siswaList.length,
+                            itemBuilder: (context, index) => _buildSiswaCard(context, _siswaList[index]),
+                          ),
+                  ),
+                ),
+              ],
+            ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {},
+        onPressed: () => _showSiswaDialog(),
         backgroundColor: const Color(0xFF6366F1),
         icon: const Icon(Icons.person_add_rounded),
         label: const Text('Tambah Siswa'),
@@ -158,67 +216,50 @@ class _SiswaScreenState extends State<SiswaScreen> {
     );
   }
 
-  Widget _buildSiswaCard(BuildContext context, Map<String, String> siswa) {
+  Widget _buildSiswaCard(BuildContext context, dynamic siswa) {
     final isLaki = siswa['jk'] == 'L';
     final color = isLaki ? const Color(0xFF3B82F6) : const Color(0xFFEC4899);
     final icon = isLaki ? Icons.boy_rounded : Icons.girl_rounded;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey[200]!, width: 1),
-      ),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.grey[200]!, width: 1)),
       child: ListTile(
         contentPadding: const EdgeInsets.all(16),
         leading: Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(12),
-          ),
+          width: 48, height: 48,
+          decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)),
           child: Icon(icon, color: color, size: 24),
         ),
-        title: Text(
-          siswa['nama']!,
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1F2937),
-          ),
-        ),
-        subtitle: Row(
+        title: Text(siswa['nama'] ?? '-', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF1F2937))),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.badge_rounded, size: 14, color: Colors.grey[500]),
-            const SizedBox(width: 6),
-            Text(
-              'NIS: ${siswa['nis']}',
-              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-            ),
+            Row(children: [
+              Icon(Icons.badge_rounded, size: 14, color: Colors.grey[500]),
+              const SizedBox(width: 6),
+              Text('NIS: ${siswa['nis']} • ${siswa['kelas']}', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+            ]),
+            const SizedBox(height: 4),
+            Row(children: [
+              Icon(Icons.school_rounded, size: 14, color: Colors.grey[500]),
+              const SizedBox(width: 6),
+              Expanded(child: Text(siswa['sekolah'] ?? '-', style: TextStyle(fontSize: 11, color: Colors.grey[500]))),
+            ]),
           ],
         ),
-        trailing: PopupMenuButton(
+        trailing: PopupMenuButton<String>(
+          onSelected: (value) {
+            if (value == 'edit') {
+              _showSiswaDialog(siswa: Map<String, dynamic>.from(siswa));
+            }
+            if (value == 'delete') {
+              _confirmDelete(siswa['rowKey'], siswa['nama']);
+            }
+          },
           itemBuilder: (context) => [
-            const PopupMenuItem(
-              child: Row(
-                children: [
-                  Icon(Icons.edit_rounded, size: 18),
-                  SizedBox(width: 8),
-                  Text('Edit'),
-                ],
-              ),
-            ),
-            const PopupMenuItem(
-              child: Row(
-                children: [
-                  Icon(Icons.delete_rounded, size: 18),
-                  SizedBox(width: 8),
-                  Text('Hapus'),
-                ],
-              ),
-            ),
+            const PopupMenuItem(value: 'edit', child: Row(children: [Icon(Icons.edit_rounded, size: 18), SizedBox(width: 8), Text('Edit')])),
+            const PopupMenuItem(value: 'delete', child: Row(children: [Icon(Icons.delete_rounded, size: 18, color: Colors.red), SizedBox(width: 8), Text('Hapus', style: TextStyle(color: Colors.red))])),
           ],
         ),
       ),

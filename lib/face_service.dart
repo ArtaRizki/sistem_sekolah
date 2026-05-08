@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+import 'dart:developer' as d;
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,7 +19,7 @@ class FaceService {
     final modelFile = File('${dir.path}/model/vggface.tflite');
 
     if (!modelFile.existsSync()) {
-      print("Model missing, downloading...");
+      d.log("Model missing, downloading...");
       await _downloadModel(modelFile);
     }
 
@@ -58,7 +59,7 @@ class FaceService {
     // Save locally
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('registered_face', jsonEncode(embedding));
-    
+
     // Sync to server
     await _apiService.registerFace(embedding);
   }
