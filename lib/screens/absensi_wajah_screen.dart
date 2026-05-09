@@ -147,7 +147,9 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
           double maxSimilarity = 0.0;
 
           for (var reg in _registeredFaces) {
-            final List<double> regEmbedding = (reg['embedding'] as List).cast<double>();
+            final List<double> regEmbedding = (reg['embedding'] as List)
+                .map((e) => (e as num).toDouble())
+                .toList();
             final similarity = _faceService.calculateSimilarity(regEmbedding, embedding);
             if (similarity > maxSimilarity) {
               maxSimilarity = similarity;

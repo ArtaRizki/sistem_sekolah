@@ -52,7 +52,7 @@ class FaceService {
     final List<dynamic>? result = await _channel.invokeMethod('getEmbedding', {
       'imagePath': imagePath,
     });
-    return result?.cast<double>();
+    return result?.map((e) => (e as num).toDouble()).toList();
   }
 
   Future<void> saveRegisteredFace(List<double> embedding, {String? userId}) async {
@@ -69,7 +69,7 @@ class FaceService {
     final data = prefs.getString('registered_face');
     if (data == null) return null;
     final List<dynamic> list = jsonDecode(data);
-    return list.cast<double>();
+    return list.map((e) => (e as num).toDouble()).toList();
   }
 
   double calculateSimilarity(List<double> v1, List<double> v2) {
