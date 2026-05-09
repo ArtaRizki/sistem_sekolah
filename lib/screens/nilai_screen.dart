@@ -182,7 +182,7 @@ class _NilaiScreenState extends State<NilaiScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Nilai Harian Siswa', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1F2937), fontSize: 24)),
+        title: const Text('Nilai Harian Siswa', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF1F2937), fontSize: 22)),
         elevation: 0, backgroundColor: Colors.transparent, surfaceTintColor: Colors.transparent,
         actions: [
           IconButton(icon: const Icon(Icons.picture_as_pdf_rounded), tooltip: 'Export PDF', onPressed: _generatePdf),
@@ -213,7 +213,7 @@ class _NilaiScreenState extends State<NilaiScreen> {
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : _nilaiData.isEmpty
-                      ? Center(child: Text('Belum ada data nilai', style: TextStyle(color: Colors.grey[600])))
+                      ? Center(child: Text('Belum ada data nilai', style: TextStyle(color: Color(0xFF1F2937), fontWeight: FontWeight.w300)))
                       : ListView.builder(
                           padding: const EdgeInsets.symmetric(horizontal: 24),
                           itemCount: _nilaiData.length,
@@ -227,14 +227,14 @@ class _NilaiScreenState extends State<NilaiScreen> {
                                 leading: Container(
                                   width: 48, height: 48,
                                   decoration: BoxDecoration(color: const Color(0xFF6366F1).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-                                  child: Center(child: Text('${data['nilai'] ?? 0}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF6366F1)))),
+                                  child: Center(child: Text('${data['nilai'] ?? 0}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF6366F1)))),
                                 ),
-                                title: Text(data['nama'] ?? '-', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF1F2937))),
+                                title: Text(data['nama'] ?? '-', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1F2937))),
                                 subtitle: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('NIS: ${data['nis']} • ${data['mapel']}', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-                                    Text(data['sekolah'] ?? '-', style: TextStyle(fontSize: 11, color: Colors.grey[500])),
+                                    Text('NIS: ${data['nis']} • ${data['mapel']}', style: const TextStyle(fontSize: 12, color: Color(0xFF1F2937), fontWeight: FontWeight.w300)),
+                                    Text(data['sekolah'] ?? '-', style: const TextStyle(fontSize: 11, color: Color(0xFF1F2937), fontWeight: FontWeight.w300)),
                                   ],
                                 ),
                                 trailing: PopupMenuButton<String>(
@@ -262,8 +262,11 @@ class _NilaiScreenState extends State<NilaiScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showNilaiDialog(),
         backgroundColor: const Color(0xFF6366F1),
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Tambah Nilai'),
+        icon: const Icon(Icons.add_rounded, color: Colors.white),
+        label: const Text(
+          'Tambah Nilai',
+          style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
+        ),
       ),
     );
   }

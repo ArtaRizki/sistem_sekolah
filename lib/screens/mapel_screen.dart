@@ -51,7 +51,10 @@ class _MapelScreenState extends State<MapelScreen> {
     setState(() => _isLoading = true);
     try {
       final data = await _apiService.getMapel(sekolah: widget.sekolah);
-      setState(() { _mapelList = data; _isLoading = false; });
+      setState(() {
+        _mapelList = data;
+        _isLoading = false;
+      });
     } catch (e) {
       debugPrint("Error: $e");
       setState(() => _isLoading = false);
@@ -62,11 +65,11 @@ class _MapelScreenState extends State<MapelScreen> {
     final namaC = TextEditingController(text: mapel?['nama'] ?? '');
     final kodeC = TextEditingController(text: mapel?['kode'] ?? '');
     final isEdit = mapel != null;
-    
+
     // School assignment state
     String currentSekolahString = mapel?['sekolah'] ?? 'Semua';
-    List<String> selectedSchools = currentSekolahString == 'Semua' 
-        ? ['Semua'] 
+    List<String> selectedSchools = currentSekolahString == 'Semua'
+        ? ['Semua']
         : currentSekolahString.split(', ');
 
     showDialog(
@@ -81,14 +84,34 @@ class _MapelScreenState extends State<MapelScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TextField(controller: namaC, decoration: const InputDecoration(labelText: 'Nama Mapel', border: OutlineInputBorder()), textCapitalization: TextCapitalization.characters),
+                  TextField(
+                    controller: namaC,
+                    decoration: const InputDecoration(
+                      labelText: 'Nama Mapel',
+                      border: OutlineInputBorder(),
+                    ),
+                    textCapitalization: TextCapitalization.characters,
+                  ),
                   const SizedBox(height: 12),
-                  TextField(controller: kodeC, decoration: const InputDecoration(labelText: 'Kode', border: OutlineInputBorder()), textCapitalization: TextCapitalization.characters),
+                  TextField(
+                    controller: kodeC,
+                    decoration: const InputDecoration(
+                      labelText: 'Kode',
+                      border: OutlineInputBorder(),
+                    ),
+                    textCapitalization: TextCapitalization.characters,
+                  ),
                   const SizedBox(height: 20),
-                  const Text('Assign ke Sekolah:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  const Text(
+                    'Assign ke Sekolah:',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                  ),
                   const SizedBox(height: 8),
                   CheckboxListTile(
-                    title: const Text('Semua Sekolah (Global)', style: TextStyle(fontSize: 13)),
+                    title: const Text(
+                      'Semua Sekolah (Global)',
+                      style: TextStyle(fontSize: 13),
+                    ),
                     value: selectedSchools.contains('Semua'),
                     dense: true,
                     contentPadding: EdgeInsets.zero,
@@ -114,10 +137,12 @@ class _MapelScreenState extends State<MapelScreen> {
                         setDialogState(() {
                           if (val == true) {
                             selectedSchools.remove('Semua');
-                            if (!selectedSchools.contains(nama)) selectedSchools.add(nama);
+                            if (!selectedSchools.contains(nama))
+                              selectedSchools.add(nama);
                           } else {
                             selectedSchools.remove(nama);
-                            if (selectedSchools.isEmpty) selectedSchools.add('Semua');
+                            if (selectedSchools.isEmpty)
+                              selectedSchools.add('Semua');
                           }
                         });
                       },
@@ -128,7 +153,10 @@ class _MapelScreenState extends State<MapelScreen> {
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Batal'),
+            ),
             FilledButton(
               onPressed: () async {
                 if (namaC.text.isEmpty) return;
@@ -136,13 +164,28 @@ class _MapelScreenState extends State<MapelScreen> {
                 Navigator.pop(ctx);
                 setState(() => _isLoading = true);
                 if (isEdit) {
-                  await _apiService.updateMapel(mapel['nama'], namaC.text, kodeC.text, schoolsToSave);
+                  await _apiService.updateMapel(
+                    mapel['nama'],
+                    namaC.text,
+                    kodeC.text,
+                    schoolsToSave,
+                  );
                 } else {
-                  await _apiService.addMapel(namaC.text, kodeC.text, schoolsToSave);
+                  await _apiService.addMapel(
+                    namaC.text,
+                    kodeC.text,
+                    schoolsToSave,
+                  );
                 }
                 _loadMapel();
                 if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(isEdit ? 'Mapel diperbarui' : 'Mapel ditambahkan')));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      isEdit ? 'Mapel diperbarui' : 'Mapel ditambahkan',
+                    ),
+                  ),
+                );
               },
               child: Text(isEdit ? 'Simpan' : 'Tambah'),
             ),
@@ -159,7 +202,10 @@ class _MapelScreenState extends State<MapelScreen> {
         title: const Text('Hapus Mapel'),
         content: Text('Yakin ingin menghapus "$nama"?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal'),
+          ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () async {
@@ -167,7 +213,10 @@ class _MapelScreenState extends State<MapelScreen> {
               setState(() => _isLoading = true);
               await _apiService.deleteMapel(nama);
               _loadMapel();
-              if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Mapel dihapus')));
+              if (mounted)
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('Mapel dihapus')));
             },
             child: const Text('Hapus'),
           ),
@@ -180,15 +229,32 @@ class _MapelScreenState extends State<MapelScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mata Pelajaran', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1F2937), fontSize: 24)),
-        elevation: 0, backgroundColor: Colors.transparent, surfaceTintColor: Colors.transparent,
+        title: const Text(
+          'Mata Pelajaran',
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF1F2937),
+            fontSize: 22,
+          ),
+        ),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: _loadMapel,
               child: _mapelList.isEmpty
-                  ? Center(child: Text('Belum ada data mapel', style: TextStyle(color: Colors.grey[600])))
+                  ? Center(
+                      child: Text(
+                        'Belum ada data mapel',
+                        style: TextStyle(
+                          color: Color(0xFF1F2937),
+                          fontWeight: FontWeight.w300,
+                        ),
+                      ),
+                    )
                   : ListView.builder(
                       padding: const EdgeInsets.all(24),
                       itemCount: _mapelList.length,
@@ -197,30 +263,97 @@ class _MapelScreenState extends State<MapelScreen> {
                         final assigned = mapel['sekolah'] ?? 'Semua';
                         return Container(
                           margin: const EdgeInsets.only(bottom: 12),
-                          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.grey[200]!, width: 1)),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: Colors.grey[200]!,
+                              width: 1,
+                            ),
+                          ),
                           child: ListTile(
                             contentPadding: const EdgeInsets.all(16),
                             leading: Container(
-                              width: 48, height: 48,
-                              decoration: BoxDecoration(color: const Color(0xFF6366F1).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-                              child: const Icon(Icons.menu_book_rounded, color: Color(0xFF6366F1)),
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: const Color(
+                                  0xFF6366F1,
+                                ).withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.menu_book_rounded,
+                                color: Color(0xFF6366F1),
+                              ),
                             ),
-                            title: Text(mapel['nama'] ?? '-', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1F2937))),
+                            title: Text(
+                              mapel['nama'] ?? '-',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF1F2937),
+                              ),
+                            ),
                             subtitle: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Kode: ${mapel['kode'] ?? '-'}', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-                                Text('Sekolah: $assigned', style: TextStyle(fontSize: 11, color: Colors.grey[400], fontStyle: FontStyle.italic)),
+                                Text(
+                                  'Kode: ${mapel['kode'] ?? '-'}',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF1F2937),
+                                    fontWeight: FontWeight.w300,
+                                  ),
+                                ),
+                                Text(
+                                  'Sekolah: $assigned',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: Color(0xFF1F2937),
+                                    fontWeight: FontWeight.w300,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
                               ],
                             ),
                             trailing: PopupMenuButton<String>(
                               onSelected: (value) {
-                                if (value == 'edit') _showDialog(mapel: Map<String, dynamic>.from(mapel));
-                                if (value == 'delete') _confirmDelete(mapel['nama']);
+                                if (value == 'edit')
+                                  _showDialog(
+                                    mapel: Map<String, dynamic>.from(mapel),
+                                  );
+                                if (value == 'delete')
+                                  _confirmDelete(mapel['nama']);
                               },
                               itemBuilder: (context) => [
-                                const PopupMenuItem(value: 'edit', child: Row(children: [Icon(Icons.edit_rounded, size: 18), SizedBox(width: 8), Text('Edit')])),
-                                const PopupMenuItem(value: 'delete', child: Row(children: [Icon(Icons.delete_rounded, size: 18, color: Colors.red), SizedBox(width: 8), Text('Hapus', style: TextStyle(color: Colors.red))])),
+                                const PopupMenuItem(
+                                  value: 'edit',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.edit_rounded, size: 18),
+                                      SizedBox(width: 8),
+                                      Text('Edit'),
+                                    ],
+                                  ),
+                                ),
+                                const PopupMenuItem(
+                                  value: 'delete',
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.delete_rounded,
+                                        size: 18,
+                                        color: Colors.red,
+                                      ),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        'Hapus',
+                                        style: TextStyle(color: Colors.red),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -231,8 +364,11 @@ class _MapelScreenState extends State<MapelScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showDialog(),
         backgroundColor: const Color(0xFF6366F1),
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Tambah Mapel'),
+        icon: const Icon(Icons.add_rounded, color: Colors.white),
+        label: const Text(
+          'Tambah Mapel',
+          style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
+        ),
       ),
     );
   }

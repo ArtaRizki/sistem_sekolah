@@ -28,12 +28,85 @@ class SistemSekolahApp extends StatelessWidget {
           surface: const Color(0xFFFAFAFA),
         ),
         useMaterial3: true,
-        fontFamily: 'Roboto',
+        fontFamily: 'Nunito',
+        textTheme: const TextTheme(
+          // Display
+          displayLarge: TextStyle(
+            fontFamily: 'Nunito',
+            fontWeight: FontWeight.w700,
+          ),
+          displayMedium: TextStyle(
+            fontFamily: 'Nunito',
+            fontWeight: FontWeight.w700,
+          ),
+          displaySmall: TextStyle(
+            fontFamily: 'Nunito',
+            fontWeight: FontWeight.w700,
+          ),
+          // Headline
+          headlineLarge: TextStyle(
+            fontFamily: 'Nunito',
+            fontWeight: FontWeight.w700,
+          ),
+          headlineMedium: TextStyle(
+            fontFamily: 'Nunito',
+            fontWeight: FontWeight.w700,
+          ),
+          headlineSmall: TextStyle(
+            fontFamily: 'Nunito',
+            fontWeight: FontWeight.w700,
+          ),
+          // Title
+          titleLarge: TextStyle(
+            fontFamily: 'Nunito',
+            fontWeight: FontWeight.w700,
+          ),
+          titleMedium: TextStyle(
+            fontFamily: 'Nunito',
+            fontWeight: FontWeight.w500,
+          ),
+          titleSmall: TextStyle(
+            fontFamily: 'Nunito',
+            fontWeight: FontWeight.w500,
+          ),
+          // Body
+          bodyLarge: TextStyle(
+            fontFamily: 'Nunito',
+            fontWeight: FontWeight.w400,
+          ),
+          bodyMedium: TextStyle(
+            fontFamily: 'Nunito',
+            fontWeight: FontWeight.w400,
+          ),
+          bodySmall: TextStyle(
+            fontFamily: 'Nunito',
+            fontWeight: FontWeight.w300,
+          ),
+          // Label
+          labelLarge: TextStyle(
+            fontFamily: 'Nunito',
+            fontWeight: FontWeight.w500,
+          ),
+          labelMedium: TextStyle(
+            fontFamily: 'Nunito',
+            fontWeight: FontWeight.w500,
+          ),
+          labelSmall: TextStyle(
+            fontFamily: 'Nunito',
+            fontWeight: FontWeight.w300,
+          ),
+        ),
         appBarTheme: const AppBarTheme(
           elevation: 0,
           centerTitle: false,
           backgroundColor: Colors.transparent,
           foregroundColor: Color(0xFF1F2937),
+          titleTextStyle: TextStyle(
+            fontFamily: 'Nunito',
+            fontWeight: FontWeight.w700,
+            fontSize: 22,
+            color: Color(0xFF1F2937),
+          ),
         ),
         cardTheme: CardThemeData(
           elevation: 0,
@@ -49,6 +122,97 @@ class SistemSekolahApp extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+            textStyle: const TextStyle(
+              fontFamily: 'Nunito',
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        dialogTheme: DialogThemeData(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.transparent,
+          elevation: 8,
+          shadowColor: const Color(0xFF6366F1).withValues(alpha: 0.25),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          titleTextStyle: const TextStyle(
+            fontFamily: 'Nunito',
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+            color: Color(0xFF1F2937),
+          ),
+          contentTextStyle: const TextStyle(
+            fontFamily: 'Nunito',
+            fontWeight: FontWeight.w400,
+            fontSize: 12,
+            color: Color(0xFF1F2937),
+          ),
+          barrierColor: Colors.black54,
+        ),
+        filledButtonTheme: FilledButtonThemeData(
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFF6366F1),
+            foregroundColor: Colors.white,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            textStyle: const TextStyle(
+              fontFamily: 'Nunito',
+              fontWeight: FontWeight.w700,
+              fontSize: 14,
+            ),
+          ),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFF6366F1),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            textStyle: const TextStyle(
+              fontFamily: 'Nunito',
+              fontWeight: FontWeight.w500,
+              fontSize: 14,
+            ),
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: const Color(0xFFF9FAFB),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey[300]!),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey[300]!),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFF6366F1), width: 2),
+          ),
+          labelStyle: const TextStyle(
+            fontFamily: 'Nunito',
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF1F2937),
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
+        ),
+        dropdownMenuTheme: DropdownMenuThemeData(
+          inputDecorationTheme: InputDecorationTheme(
+            filled: true,
+            fillColor: const Color(0xFFF9FAFB),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
           ),
         ),
       ),
@@ -102,19 +266,45 @@ class _MainLayoutState extends State<MainLayout> {
   ];
 
   final List<NavigationRailDestination> _navDestinations = const [
-    NavigationRailDestination(icon: Icon(Icons.home_rounded), label: Text('Dashboard')),
-    NavigationRailDestination(icon: Icon(Icons.menu_book_rounded), label: Text('Mapel')),
-    NavigationRailDestination(icon: Icon(Icons.person_rounded), label: Text('Guru')),
-    NavigationRailDestination(icon: Icon(Icons.school_rounded), label: Text('Sekolah')),
-    NavigationRailDestination(icon: Icon(Icons.people_rounded), label: Text('Siswa')),
-    NavigationRailDestination(icon: Icon(Icons.assessment_rounded), label: Text('Nilai')),
-    NavigationRailDestination(icon: Icon(Icons.bar_chart_rounded), label: Text('Rekap')),
-    NavigationRailDestination(icon: Icon(Icons.face_rounded), label: Text('Absensi')),
+    NavigationRailDestination(
+      icon: Icon(Icons.home_rounded),
+      label: Text('Dashboard'),
+    ),
+    NavigationRailDestination(
+      icon: Icon(Icons.menu_book_rounded),
+      label: Text('Mapel'),
+    ),
+    NavigationRailDestination(
+      icon: Icon(Icons.person_rounded),
+      label: Text('Guru'),
+    ),
+    NavigationRailDestination(
+      icon: Icon(Icons.school_rounded),
+      label: Text('Sekolah'),
+    ),
+    NavigationRailDestination(
+      icon: Icon(Icons.people_rounded),
+      label: Text('Siswa'),
+    ),
+    NavigationRailDestination(
+      icon: Icon(Icons.assessment_rounded),
+      label: Text('Nilai'),
+    ),
+    NavigationRailDestination(
+      icon: Icon(Icons.bar_chart_rounded),
+      label: Text('Rekap'),
+    ),
+    NavigationRailDestination(
+      icon: Icon(Icons.face_rounded),
+      label: Text('Absensi'),
+    ),
   ];
 
   void _showSekolahPicker() {
     showModalBottomSheet(
       context: context,
+      backgroundColor: Colors.white,
+      barrierColor: Colors.black54,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -142,17 +332,39 @@ class _MainLayoutState extends State<MainLayout> {
                 children: [
                   Container(
                     margin: const EdgeInsets.only(top: 12),
-                    width: 40, height: 4,
-                    decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                   const Padding(
                     padding: EdgeInsets.all(16),
-                    child: Text('Pilih Sekolah', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1F2937))),
+                    child: Text(
+                      'Pilih Sekolah',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1F2937),
+                      ),
+                    ),
                   ),
                   ListTile(
-                    leading: const Icon(Icons.all_inclusive_rounded, color: Color(0xFF6366F1)),
-                    title: const Text('Semua Sekolah', style: TextStyle(fontWeight: FontWeight.w600)),
-                    trailing: _selectedSekolah == null ? const Icon(Icons.check_rounded, color: Color(0xFF6366F1)) : null,
+                    leading: const Icon(
+                      Icons.all_inclusive_rounded,
+                      color: Color(0xFF6366F1),
+                    ),
+                    title: const Text(
+                      'Semua Sekolah',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    trailing: _selectedSekolah == null
+                        ? const Icon(
+                            Icons.check_rounded,
+                            color: Color(0xFF6366F1),
+                          )
+                        : null,
                     onTap: () {
                       setState(() => _selectedSekolah = null);
                       Navigator.pop(ctx);
@@ -163,16 +375,33 @@ class _MainLayoutState extends State<MainLayout> {
                       padding: EdgeInsets.all(24),
                       child: CircularProgressIndicator(),
                     ),
-                  ...sheetList.map((s) => ListTile(
-                    leading: const Icon(Icons.school_rounded, color: Color(0xFF8B5CF6)),
-                    title: Text(s['nama'] ?? '-'),
-                    subtitle: Text(s['alamat'] ?? '-', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
-                    trailing: _selectedSekolah == s['nama'] ? const Icon(Icons.check_rounded, color: Color(0xFF6366F1)) : null,
-                    onTap: () {
-                      setState(() => _selectedSekolah = s['nama']);
-                      Navigator.pop(ctx);
-                    },
-                  )),
+                  ...sheetList.map(
+                    (s) => ListTile(
+                      leading: const Icon(
+                        Icons.school_rounded,
+                        color: Color(0xFF8B5CF6),
+                      ),
+                      title: Text(s['nama'] ?? '-'),
+                      subtitle: Text(
+                        s['alamat'] ?? '-',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF1F2937),
+                          fontWeight: FontWeight.w300,
+                        ),
+                      ),
+                      trailing: _selectedSekolah == s['nama']
+                          ? const Icon(
+                              Icons.check_rounded,
+                              color: Color(0xFF6366F1),
+                            )
+                          : null,
+                      onTap: () {
+                        setState(() => _selectedSekolah = s['nama']);
+                        Navigator.pop(ctx);
+                      },
+                    ),
+                  ),
                   const SizedBox(height: 16),
                 ],
               ),
@@ -191,20 +420,34 @@ class _MainLayoutState extends State<MainLayout> {
         decoration: BoxDecoration(
           color: const Color(0xFF6366F1).withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFF6366F1).withValues(alpha: 0.3)),
+          border: Border.all(
+            color: const Color(0xFF6366F1).withValues(alpha: 0.3),
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.school_rounded, size: 16, color: Color(0xFF6366F1)),
+            const Icon(
+              Icons.school_rounded,
+              size: 16,
+              color: Color(0xFF6366F1),
+            ),
             const SizedBox(width: 6),
             Text(
               _selectedSekolah ?? 'Semua Sekolah',
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF6366F1)),
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF6366F1),
+              ),
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(width: 4),
-            const Icon(Icons.arrow_drop_down_rounded, size: 18, color: Color(0xFF6366F1)),
+            const Icon(
+              Icons.arrow_drop_down_rounded,
+              size: 18,
+              color: Color(0xFF6366F1),
+            ),
           ],
         ),
       ),
@@ -219,20 +462,50 @@ class _MainLayoutState extends State<MainLayout> {
     return Scaffold(
       appBar: isDesktop
           ? null
-          : AppBar(
-              title: const Text(
-                'DRP Absensi',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Color(0xFF1F2937)),
+          : PreferredSize(
+              preferredSize: Size.fromHeight(
+                MediaQuery.of(context).size.width < 400 ? 88 : 56,
               ),
-              elevation: 0,
-              backgroundColor: Colors.white,
-              surfaceTintColor: Colors.transparent,
-              actions: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: _buildSekolahSelector(),
+              child: AppBar(
+                title: const Text(
+                  'DRP Absensi',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 18,
+                    color: Color(0xFF1F2937),
+                  ),
                 ),
-              ],
+                toolbarHeight: MediaQuery.of(context).size.width < 400
+                    ? 44
+                    : 56,
+                elevation: 0,
+                backgroundColor: Colors.white,
+                surfaceTintColor: Colors.transparent,
+                actions: MediaQuery.of(context).size.width >= 400
+                    ? [
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: _buildSekolahSelector(),
+                        ),
+                      ]
+                    : null,
+                bottom: MediaQuery.of(context).size.width < 400
+                    ? PreferredSize(
+                        preferredSize: const Size.fromHeight(40),
+                        child: Padding(
+                          padding: const EdgeInsets.only(
+                            left: 16,
+                            right: 16,
+                            bottom: 12,
+                          ),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: _buildSekolahSelector(),
+                          ),
+                        ),
+                      )
+                    : null,
+              ),
             ),
       drawer: isDesktop
           ? null
@@ -243,20 +516,38 @@ class _MainLayoutState extends State<MainLayout> {
                   DrawerHeader(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [const Color(0xFF6366F1), const Color(0xFF8B5CF6)],
+                        colors: [
+                          const Color(0xFF6366F1),
+                          const Color(0xFF8B5CF6),
+                        ],
                       ),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        const Icon(Icons.school_rounded, size: 40, color: Colors.white),
+                        const Icon(
+                          Icons.school_rounded,
+                          size: 40,
+                          color: Colors.white,
+                        ),
                         const SizedBox(height: 8),
-                        const Text('DRP Absensi', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                        const Text(
+                          'DRP Absensi',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                         const SizedBox(height: 4),
                         Text(
                           _selectedSekolah ?? 'Semua Sekolah',
-                          style: const TextStyle(color: Colors.white70, fontSize: 12),
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w300,
+                          ),
                         ),
                       ],
                     ),
@@ -266,8 +557,12 @@ class _MainLayoutState extends State<MainLayout> {
                       leading: _navDestinations[i].icon,
                       title: _navDestinations[i].label,
                       selected: _selectedIndex == i,
-                      selectedTileColor: const Color(0xFF6366F1).withValues(alpha: 0.1),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      selectedTileColor: const Color(
+                        0xFF6366F1,
+                      ).withValues(alpha: 0.1),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       onTap: () {
                         setState(() => _selectedIndex = i);
                         Navigator.pop(context);
@@ -283,7 +578,9 @@ class _MainLayoutState extends State<MainLayout> {
               width: 280,
               decoration: BoxDecoration(
                 color: Colors.white,
-                border: Border(right: BorderSide(color: Colors.grey[200]!, width: 1)),
+                border: Border(
+                  right: BorderSide(color: Colors.grey[200]!, width: 1),
+                ),
               ),
               child: Column(
                 children: [
@@ -296,14 +593,28 @@ class _MainLayoutState extends State<MainLayout> {
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: [const Color(0xFF6366F1), const Color(0xFF8B5CF6)],
+                              colors: [
+                                const Color(0xFF6366F1),
+                                const Color(0xFF8B5CF6),
+                              ],
                             ),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(Icons.school_rounded, size: 28, color: Colors.white),
+                          child: const Icon(
+                            Icons.school_rounded,
+                            size: 28,
+                            color: Colors.white,
+                          ),
                         ),
                         const SizedBox(height: 12),
-                        const Text('DRP Absensi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1F2937))),
+                        const Text(
+                          'DRP Absensi',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1F2937),
+                          ),
+                        ),
                         const SizedBox(height: 12),
                         // Sekolah selector in sidebar
                         _buildSekolahSelector(),
@@ -321,26 +632,47 @@ class _MainLayoutState extends State<MainLayout> {
                           child: Material(
                             color: Colors.transparent,
                             child: InkWell(
-                              onTap: () => setState(() => _selectedIndex = index),
+                              onTap: () =>
+                                  setState(() => _selectedIndex = index),
                               borderRadius: BorderRadius.circular(12),
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: isSelected ? const Color(0xFF6366F1).withValues(alpha: 0.1) : Colors.transparent,
+                                  color: isSelected
+                                      ? const Color(
+                                          0xFF6366F1,
+                                        ).withValues(alpha: 0.1)
+                                      : Colors.transparent,
                                   borderRadius: BorderRadius.circular(12),
-                                  border: isSelected ? Border.all(color: const Color(0xFF6366F1), width: 1.5) : null,
+                                  border: isSelected
+                                      ? Border.all(
+                                          color: const Color(0xFF6366F1),
+                                          width: 1.5,
+                                        )
+                                      : null,
                                 ),
                                 child: Row(
                                   children: [
-                                    Icon(_getIconData(index), size: 22, color: isSelected ? const Color(0xFF6366F1) : Colors.grey[600]),
+                                    Icon(
+                                      _getIconData(index),
+                                      size: 20,
+                                      color: isSelected
+                                          ? const Color(0xFF6366F1)
+                                          : const Color(0xFF1F2937),
+                                    ),
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: Text(
                                         _getLabel(index),
                                         style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                                          color: isSelected ? const Color(0xFF6366F1) : Colors.grey[600],
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                          color: isSelected
+                                              ? const Color(0xFF6366F1)
+                                              : const Color(0xFF1F2937),
                                         ),
                                       ),
                                     ),
@@ -364,14 +696,29 @@ class _MainLayoutState extends State<MainLayout> {
 
   IconData _getIconData(int index) {
     const icons = [
-      Icons.home_rounded, Icons.menu_book_rounded, Icons.person_rounded, Icons.school_rounded,
-      Icons.people_rounded, Icons.assessment_rounded, Icons.bar_chart_rounded, Icons.face_rounded,
+      Icons.home_rounded,
+      Icons.menu_book_rounded,
+      Icons.person_rounded,
+      Icons.school_rounded,
+      Icons.people_rounded,
+      Icons.assessment_rounded,
+      Icons.bar_chart_rounded,
+      Icons.face_rounded,
     ];
     return icons[index];
   }
 
   String _getLabel(int index) {
-    const labels = ['Dashboard', 'Mapel', 'Guru', 'Sekolah', 'Siswa', 'Nilai', 'Rekap', 'Absensi'];
+    const labels = [
+      'Dashboard',
+      'Mapel',
+      'Guru',
+      'Sekolah',
+      'Siswa',
+      'Nilai',
+      'Rekap',
+      'Absensi',
+    ];
     return labels[index];
   }
 }

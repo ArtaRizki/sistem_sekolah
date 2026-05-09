@@ -122,7 +122,7 @@ class _SekolahScreenState extends State<SekolahScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Data Sekolah', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1F2937), fontSize: 24)),
+        title: const Text('Data Sekolah', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF1F2937), fontSize: 22)),
         elevation: 0, backgroundColor: Colors.transparent, surfaceTintColor: Colors.transparent,
       ),
       body: _isLoading
@@ -130,7 +130,7 @@ class _SekolahScreenState extends State<SekolahScreen> {
           : RefreshIndicator(
               onRefresh: _loadSekolah,
               child: _sekolahList.isEmpty
-                  ? Center(child: Text('Belum ada data sekolah', style: TextStyle(color: Colors.grey[600])))
+                  ? Center(child: Text('Belum ada data sekolah', style: TextStyle(color: Color(0xFF1F2937), fontWeight: FontWeight.w300)))
                   : ListView.builder(
                       padding: const EdgeInsets.all(24),
                       itemCount: _sekolahList.length,
@@ -148,11 +148,11 @@ class _SekolahScreenState extends State<SekolahScreen> {
                               decoration: BoxDecoration(color: c.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
                               child: Icon(Icons.school_rounded, color: c),
                             ),
-                            title: Text(sekolah['nama'] ?? '-', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF1F2937))),
+                            title: Text(sekolah['nama'] ?? '-', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1F2937))),
                             subtitle: Row(children: [
                               Icon(Icons.location_on_rounded, size: 14, color: Colors.grey[500]),
                               const SizedBox(width: 4),
-                              Expanded(child: Text(sekolah['alamat'] ?? '-', style: TextStyle(fontSize: 12, color: Colors.grey[600]))),
+                              Expanded(child: Text(sekolah['alamat'] ?? '-', style: const TextStyle(fontSize: 12, color: Color(0xFF1F2937), fontWeight: FontWeight.w300))),
                             ]),
                             trailing: PopupMenuButton<String>(
                               onSelected: (value) {
@@ -176,8 +176,11 @@ class _SekolahScreenState extends State<SekolahScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showDialog(),
         backgroundColor: const Color(0xFF6366F1),
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Tambah Sekolah'),
+        icon: const Icon(Icons.add_rounded, color: Colors.white),
+        label: const Text(
+          'Tambah Sekolah',
+          style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
+        ),
       ),
     );
   }

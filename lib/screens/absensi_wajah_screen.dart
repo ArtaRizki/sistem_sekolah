@@ -248,7 +248,7 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
               title,
               style: const TextStyle(
                 fontSize: 20,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w700,
                 color: Color(0xFF1F2937),
               ),
               textAlign: TextAlign.center,
@@ -257,8 +257,9 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
             Text(
               message,
               style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
+                fontSize: 12,
+                color: Color(0xFF1F2937),
+                fontWeight: FontWeight.w300,
                 height: 1.5,
               ),
               textAlign: TextAlign.center,
@@ -281,7 +282,7 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
                 "OK",
                 style: TextStyle(
                   color: Colors.white,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ),
@@ -327,7 +328,7 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
               const Text(
                 "Menginisialisasi Model Wajah...",
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 14,
                   color: Color(0xFF1F2937),
                   fontWeight: FontWeight.w500,
                 ),
@@ -342,9 +343,9 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
       appBar: AppBar(
         title: const Text('Verifikasi Wajah',
             style: TextStyle(
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w700,
                 color: Color(0xFF1F2937),
-                fontSize: 24)),
+                fontSize: 22)),
         elevation: 0,
         backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
@@ -378,7 +379,7 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
                 Text(
                   "Absensi Wajah",
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w700,
                       color: const Color(0xFF1F2937)),
                   textAlign: TextAlign.center,
                 ),
@@ -386,8 +387,9 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
                 Text(
                   "Gunakan teknologi pengenalan wajah untuk absensi yang lebih cepat dan aman",
                   style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
+                    fontSize: 12,
+                    color: Color(0xFF1F2937),
+                    fontWeight: FontWeight.w300,
                     height: 1.5,
                   ),
                   textAlign: TextAlign.center,
@@ -417,8 +419,8 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
                     border: Border.all(color: Colors.grey[200]!),
                   ),
                   child: SwitchListTile(
-                    title: const Text("Mode Tripod", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    subtitle: const Text("Kamera akan terus menyala untuk absensi otomatis", style: TextStyle(fontSize: 12)),
+                    title: const Text("Mode Tripod", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                    subtitle: const Text("Kamera akan terus menyala untuk absensi otomatis", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w300)),
                     value: _isTripodMode,
                     activeThumbColor: const Color(0xFF6366F1),
                     activeTrackColor: const Color(0xFF6366F1).withValues(alpha: 0.3),
@@ -495,17 +497,18 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
                     Text(
                       label,
                       style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
                         color: Color(0xFF1F2937),
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       subtitle,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 12,
-                        color: Colors.grey[600],
+                        color: Color(0xFF1F2937),
+                        fontWeight: FontWeight.w300,
                       ),
                     ),
                   ],

@@ -145,9 +145,9 @@ class _RekapScreenState extends State<RekapScreen> {
         title: const Text(
           'Rekap Kehadiran',
           style: TextStyle(
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w700,
             color: Color(0xFF1F2937),
-            fontSize: 24,
+            fontSize: 22,
           ),
         ),
         elevation: 0,
@@ -164,9 +164,9 @@ class _RekapScreenState extends State<RekapScreen> {
                 Text(
                   'Pilih Bulan',
                   style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey[700],
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1F2937),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -226,7 +226,7 @@ class _RekapScreenState extends State<RekapScreen> {
                   ? Center(
                       child: Text(
                         'Data tidak tersedia',
-                        style: TextStyle(color: Colors.grey[600]),
+                        style: TextStyle(color: Color(0xFF1F2937), fontWeight: FontWeight.w300),
                       ),
                     )
                   : ListView.builder(
@@ -244,8 +244,11 @@ class _RekapScreenState extends State<RekapScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _generatePdf,
         backgroundColor: const Color(0xFF6366F1),
-        icon: const Icon(Icons.picture_as_pdf_rounded),
-        label: const Text('Export PDF'),
+        icon: const Icon(Icons.picture_as_pdf_rounded, color: Colors.white),
+        label: const Text(
+          'Export PDF',
+          style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
+        ),
       ),
     );
   }
@@ -284,17 +287,17 @@ class _RekapScreenState extends State<RekapScreen> {
                     children: [
                       Text(
                         data['nama'] ?? '-',
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1F2937)),
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF1F2937)),
                       ),
                       if (data['sekolah'] != null && data['sekolah'].toString().isNotEmpty)
-                        Text(data['sekolah'], style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+                        Text(data['sekolah'], style: const TextStyle(fontSize: 12, color: Color(0xFF1F2937), fontWeight: FontWeight.w300)),
                     ],
                   ),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(color: Colors.green.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                  child: Text('${data['persen'] ?? 0}%', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.green)),
+                  child: Text('${data['persen'] ?? 0}%', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.green)),
                 ),
               ],
             ),
@@ -333,17 +336,17 @@ class _RekapScreenState extends State<RekapScreen> {
             value,
             style: TextStyle(
               color: color,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             label,
-            style: TextStyle(
-              color: Colors.grey[600],
+            style: const TextStyle(
+              color: Color(0xFF1F2937),
               fontSize: 11,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w300,
             ),
           ),
         ],

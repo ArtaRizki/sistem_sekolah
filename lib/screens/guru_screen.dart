@@ -50,7 +50,10 @@ class _GuruScreenState extends State<GuruScreen> {
     final namaC = TextEditingController(text: guru?['nama'] ?? '');
     final nipC = TextEditingController(text: guru?['nip'] ?? '');
     final mapelC = TextEditingController(text: guru?['mapel'] ?? '');
-    String sekolah = guru?['sekolah'] ?? widget.sekolah ?? (_sekolahList.isNotEmpty ? _sekolahList.first['nama'] : '');
+    String sekolah =
+        guru?['sekolah'] ??
+        widget.sekolah ??
+        (_sekolahList.isNotEmpty ? _sekolahList.first['nama'] : '');
     final isEdit = guru != null;
 
     showDialog(
@@ -62,36 +65,89 @@ class _GuruScreenState extends State<GuruScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextField(controller: namaC, decoration: const InputDecoration(labelText: 'Nama Guru', border: OutlineInputBorder()), textCapitalization: TextCapitalization.words),
+                TextField(
+                  controller: namaC,
+                  decoration: const InputDecoration(
+                    labelText: 'Nama Guru',
+                    border: OutlineInputBorder(),
+                  ),
+                  textCapitalization: TextCapitalization.words,
+                ),
                 const SizedBox(height: 12),
-                TextField(controller: nipC, decoration: const InputDecoration(labelText: 'NIP', border: OutlineInputBorder()), keyboardType: TextInputType.number),
+                TextField(
+                  controller: nipC,
+                  decoration: const InputDecoration(
+                    labelText: 'NIP',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
+                ),
                 const SizedBox(height: 12),
-                TextField(controller: mapelC, decoration: const InputDecoration(labelText: 'Mata Pelajaran', border: OutlineInputBorder())),
+                TextField(
+                  controller: mapelC,
+                  decoration: const InputDecoration(
+                    labelText: 'Mata Pelajaran',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   initialValue: sekolah.isNotEmpty ? sekolah : null,
-                  decoration: const InputDecoration(labelText: 'Sekolah', border: OutlineInputBorder()),
-                  items: _sekolahList.map<DropdownMenuItem<String>>((s) => DropdownMenuItem(value: s['nama'], child: Text(s['nama'], overflow: TextOverflow.ellipsis))).toList(),
+                  decoration: const InputDecoration(
+                    labelText: 'Sekolah',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: _sekolahList
+                      .map<DropdownMenuItem<String>>(
+                        (s) => DropdownMenuItem(
+                          value: s['nama'],
+                          child: Text(
+                            s['nama'],
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      )
+                      .toList(),
                   onChanged: (v) => setDialogState(() => sekolah = v!),
                 ),
               ],
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Batal'),
+            ),
             FilledButton(
               onPressed: () async {
                 if (namaC.text.isEmpty || sekolah.isEmpty) return;
                 Navigator.pop(ctx);
                 setState(() => _isLoading = true);
                 if (isEdit) {
-                  await _apiService.updateGuru(guru['rowKey'], namaC.text, nipC.text, mapelC.text, sekolah);
+                  await _apiService.updateGuru(
+                    guru['rowKey'],
+                    namaC.text,
+                    nipC.text,
+                    mapelC.text,
+                    sekolah,
+                  );
                 } else {
-                  await _apiService.addGuru(namaC.text, nipC.text, mapelC.text, sekolah);
+                  await _apiService.addGuru(
+                    namaC.text,
+                    nipC.text,
+                    mapelC.text,
+                    sekolah,
+                  );
                 }
                 _loadData();
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(isEdit ? 'Guru diperbarui' : 'Guru ditambahkan')));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        isEdit ? 'Guru diperbarui' : 'Guru ditambahkan',
+                      ),
+                    ),
+                  );
                 }
               },
               child: Text(isEdit ? 'Simpan' : 'Tambah'),
@@ -109,7 +165,10 @@ class _GuruScreenState extends State<GuruScreen> {
         title: const Text('Hapus Guru'),
         content: Text('Yakin ingin menghapus "$nama"?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal'),
+          ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () async {
@@ -118,7 +177,9 @@ class _GuruScreenState extends State<GuruScreen> {
               await _apiService.deleteGuru(rowKey);
               _loadData();
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Guru dihapus')));
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('Guru dihapus')));
               }
             },
             child: const Text('Hapus'),
@@ -130,14 +191,31 @@ class _GuruScreenState extends State<GuruScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredGuru = guruList.where((guru) =>
-        guru['nama'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
-        guru['mapel'].toString().toLowerCase().contains(_searchQuery.toLowerCase())).toList();
+    final filteredGuru = guruList
+        .where(
+          (guru) =>
+              guru['nama'].toString().toLowerCase().contains(
+                _searchQuery.toLowerCase(),
+              ) ||
+              guru['mapel'].toString().toLowerCase().contains(
+                _searchQuery.toLowerCase(),
+              ),
+        )
+        .toList();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Data Guru', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1F2937), fontSize: 24)),
-        elevation: 0, backgroundColor: Colors.transparent, surfaceTintColor: Colors.transparent,
+        title: const Text(
+          'Data Guru',
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF1F2937),
+            fontSize: 22,
+          ),
+        ),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -146,12 +224,22 @@ class _GuruScreenState extends State<GuruScreen> {
                 Padding(
                   padding: const EdgeInsets.all(24.0),
                   child: SearchBar(
-                    leading: const Icon(Icons.search_rounded, color: Color(0xFF9CA3AF), size: 20),
+                    leading: const Icon(
+                      Icons.search_rounded,
+                      color: Color(0xFF9CA3AF),
+                      size: 20,
+                    ),
                     hintText: 'Cari guru atau mapel...',
                     backgroundColor: WidgetStatePropertyAll(Colors.grey[100]),
                     elevation: const WidgetStatePropertyAll(0),
-                    shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                    padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 16, vertical: 12)),
+                    shape: WidgetStatePropertyAll(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    padding: const WidgetStatePropertyAll(
+                      EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    ),
                     onChanged: (value) => setState(() => _searchQuery = value),
                   ),
                 ),
@@ -159,15 +247,35 @@ class _GuruScreenState extends State<GuruScreen> {
                   child: RefreshIndicator(
                     onRefresh: _loadData,
                     child: filteredGuru.isEmpty
-                        ? Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                            Icon(Icons.person_off_rounded, size: 60, color: Colors.grey[300]),
-                            const SizedBox(height: 16),
-                            Text('Guru tidak ditemukan', style: TextStyle(fontSize: 16, color: Colors.grey[600])),
-                          ]))
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.person_off_rounded,
+                                  size: 60,
+                                  color: Colors.grey[300],
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Guru tidak ditemukan',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Color(0xFF1F2937),
+                                    fontWeight: FontWeight.w300,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
                         : ListView.builder(
                             padding: const EdgeInsets.symmetric(horizontal: 24),
                             itemCount: filteredGuru.length,
-                            itemBuilder: (context, index) => _buildGuruCard(context, filteredGuru[index], index),
+                            itemBuilder: (context, index) => _buildGuruCard(
+                              context,
+                              filteredGuru[index],
+                              index,
+                            ),
                           ),
                   ),
                 ),
@@ -176,19 +284,32 @@ class _GuruScreenState extends State<GuruScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showGuruDialog(),
         backgroundColor: const Color(0xFF6366F1),
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Tambah Guru'),
+        icon: const Icon(Icons.add_rounded, color: Colors.white),
+        label: const Text(
+          'Tambah Guru',
+          style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
+        ),
       ),
     );
   }
 
   Widget _buildGuruCard(BuildContext context, dynamic guru, int index) {
-    final colors = [const Color(0xFF3B82F6), const Color(0xFF8B5CF6), const Color(0xFF06B6D4), const Color(0xFF10B981), const Color(0xFFF59E0B)];
+    final colors = [
+      const Color(0xFF3B82F6),
+      const Color(0xFF8B5CF6),
+      const Color(0xFF06B6D4),
+      const Color(0xFF10B981),
+      const Color(0xFFF59E0B),
+    ];
     final color = colors[index % colors.length];
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.grey[200]!, width: 1)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey[200]!, width: 1),
+      ),
       child: Column(
         children: [
           Padding(
@@ -196,17 +317,47 @@ class _GuruScreenState extends State<GuruScreen> {
             child: Row(
               children: [
                 Container(
-                  width: 56, height: 56,
-                  decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(14)),
-                  child: Center(child: Text((guru['nama'] ?? '?')[0], style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color))),
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Center(
+                    child: Text(
+                      (guru['nama'] ?? '?')[0],
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        color: color,
+                      ),
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(guru['nama'] ?? '-', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1F2937))),
-                    const SizedBox(height: 4),
-                    Text(guru['mapel'] ?? '-', style: TextStyle(fontSize: 13, color: Colors.grey[600], fontWeight: FontWeight.w500)),
-                  ]),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        guru['nama'] ?? '-',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1F2937),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        guru['mapel'] ?? '-',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF1F2937),
+                          fontWeight: FontWeight.w300,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 PopupMenuButton<String>(
                   onSelected: (value) {
@@ -218,8 +369,30 @@ class _GuruScreenState extends State<GuruScreen> {
                     }
                   },
                   itemBuilder: (context) => [
-                    const PopupMenuItem(value: 'edit', child: Row(children: [Icon(Icons.edit_rounded, size: 18), SizedBox(width: 8), Text('Edit')])),
-                    const PopupMenuItem(value: 'delete', child: Row(children: [Icon(Icons.delete_rounded, size: 18, color: Colors.red), SizedBox(width: 8), Text('Hapus', style: TextStyle(color: Colors.red))])),
+                    const PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit_rounded, size: 18),
+                          SizedBox(width: 8),
+                          Text('Edit'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.delete_rounded,
+                            size: 18,
+                            color: Colors.red,
+                          ),
+                          SizedBox(width: 8),
+                          Text('Hapus', style: TextStyle(color: Colors.red)),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -227,16 +400,40 @@ class _GuruScreenState extends State<GuruScreen> {
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(color: Colors.grey[50], borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(16), bottomRight: Radius.circular(16))),
-            child: Row(children: [
-              Icon(Icons.school_rounded, size: 14, color: Colors.grey[500]),
-              const SizedBox(width: 6),
-              Expanded(child: Text(guru['sekolah'] ?? '-', style: TextStyle(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.w500))),
-              const SizedBox(width: 12),
-              Icon(Icons.badge_rounded, size: 14, color: Colors.grey[500]),
-              const SizedBox(width: 6),
-              Text('NIP: ${guru['nip'] ?? '-'}', style: TextStyle(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.w500)),
-            ]),
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(16),
+                bottomRight: Radius.circular(16),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.school_rounded, size: 14, color: Colors.grey[500]),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    guru['sekolah'] ?? '-',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF1F2937),
+                      fontWeight: FontWeight.w300,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Icon(Icons.badge_rounded, size: 14, color: Colors.grey[500]),
+                const SizedBox(width: 6),
+                Text(
+                  'NIP: ${guru['nip'] ?? '-'}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF1F2937),
+                    fontWeight: FontWeight.w300,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

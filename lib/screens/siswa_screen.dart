@@ -174,7 +174,7 @@ class _SiswaScreenState extends State<SiswaScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Data Siswa', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1F2937), fontSize: 24)),
+        title: const Text('Data Siswa', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF1F2937), fontSize: 22)),
         elevation: 0, backgroundColor: Colors.transparent, surfaceTintColor: Colors.transparent,
       ),
       body: _isLoading
@@ -187,7 +187,7 @@ class _SiswaScreenState extends State<SiswaScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Filter Kelas', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.grey[700])),
+                        Text('Filter Kelas', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF1F2937))),
                         const SizedBox(height: 8),
                         Container(
                           decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey[200]!, width: 1)),
@@ -221,7 +221,7 @@ class _SiswaScreenState extends State<SiswaScreen> {
                         ? Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                             Icon(Icons.person_off_rounded, size: 60, color: Colors.grey[300]),
                             const SizedBox(height: 16),
-                            Text('Tidak ada siswa', style: TextStyle(fontSize: 16, color: Colors.grey[600])),
+                            Text('Tidak ada siswa', style: TextStyle(fontSize: 14, color: Color(0xFF1F2937), fontWeight: FontWeight.w300)),
                           ]))
                         : ListView.builder(
                             padding: const EdgeInsets.all(24),
@@ -235,8 +235,11 @@ class _SiswaScreenState extends State<SiswaScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showSiswaDialog(),
         backgroundColor: const Color(0xFF6366F1),
-        icon: const Icon(Icons.person_add_rounded),
-        label: const Text('Tambah Siswa'),
+        icon: const Icon(Icons.person_add_rounded, color: Colors.white),
+        label: const Text(
+          'Tambah Siswa',
+          style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
+        ),
       ),
     );
   }
@@ -256,20 +259,20 @@ class _SiswaScreenState extends State<SiswaScreen> {
           decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)),
           child: Icon(icon, color: color, size: 24),
         ),
-        title: Text(siswa['nama'] ?? '-', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF1F2937))),
+        title: Text(siswa['nama'] ?? '-', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1F2937))),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(children: [
               Icon(Icons.badge_rounded, size: 14, color: Colors.grey[500]),
               const SizedBox(width: 6),
-              Text('NIS: ${siswa['nis']} • ${siswa['kelas']}', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+              Text('NIS: ${siswa['nis']} • ${siswa['kelas']}', style: const TextStyle(fontSize: 12, color: Color(0xFF1F2937), fontWeight: FontWeight.w300)),
             ]),
             const SizedBox(height: 4),
             Row(children: [
               Icon(Icons.school_rounded, size: 14, color: Colors.grey[500]),
               const SizedBox(width: 6),
-              Expanded(child: Text(siswa['sekolah'] ?? '-', style: TextStyle(fontSize: 11, color: Colors.grey[500]))),
+              Expanded(child: Text(siswa['sekolah'] ?? '-', style: const TextStyle(fontSize: 11, color: Color(0xFF1F2937), fontWeight: FontWeight.w300))),
             ]),
           ],
         ),

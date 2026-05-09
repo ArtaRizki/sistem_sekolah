@@ -49,19 +49,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'DRP Absensi',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1F2937),
-            fontSize: 24,
-          ),
-        ),
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        surfaceTintColor: Colors.transparent,
-      ),
       body: RefreshIndicator(
         onRefresh: _loadData,
         child: SingleChildScrollView(
@@ -70,9 +57,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Greeting
+                Builder(builder: (context) {
+                  final now = DateTime.now();
+                  const hariList = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+                  const bulanList = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+                  const greetings = {
+                    'Senin': 'Semangat',
+                    'Selasa': 'Produktif',
+                    'Rabu': 'Semangat',
+                    'Kamis': 'Luar Biasa',
+                    'Jumat': 'Barokah',
+                    'Sabtu': 'Semangat',
+                    'Minggu': 'Santai',
+                  };
+                  final hari = hariList[now.weekday - 1];
+                  final bulan = bulanList[now.month - 1];
+                  final tgl = now.day.toString().padLeft(2, '0');
+                  final greeting = '${greetings[hari]} $hari, $tgl $bulan';
+                  return Text(
+                    greeting,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF1F2937),
+                    ),
+                  );
+                }),
+                const SizedBox(height: 16),
                 // Welcome Card
                 Container(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
@@ -90,23 +105,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               style: Theme.of(context).textTheme.headlineSmall
                                   ?.copyWith(
                                     color: Colors.white,
-                                    fontWeight: FontWeight.bold,
+                                    fontWeight: FontWeight.w700,
                                   ),
                             ),
                             const SizedBox(height: 8),
                             Text(
                               widget.sekolah ?? 'Semua Sekolah',
                               style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 14,
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w300,
                               ),
                             ),
-                            if (widget.sekolah != null && _data['tingkat'] != null)
+                            if (widget.sekolah != null &&
+                                _data['tingkat'] != null)
                               Text(
                                 'Tingkat: ${_data['tingkat']}',
                                 style: const TextStyle(
-                                  color: Colors.white60,
+                                  color: Colors.white,
                                   fontSize: 12,
+                                  fontWeight: FontWeight.w300,
                                   fontStyle: FontStyle.italic,
                                 ),
                               ),
@@ -121,13 +139,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
 
                 // Guru Info
                 Text(
                   'Informasi Guru',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w700,
                     color: const Color(0xFF1F2937),
                   ),
                 ),
@@ -147,13 +165,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const Color(0xFF06B6D4),
                 ),
 
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
 
                 // Statistics Section
                 Text(
                   'Statistik',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w700,
                     color: const Color(0xFF1F2937),
                   ),
                 ),
@@ -201,11 +219,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 // Sekolah list
                 if (_data['sekolah'] is List &&
                     (_data['sekolah'] as List).isNotEmpty) ...[
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
                   Text(
                     'Daftar Sekolah',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w700,
                       color: const Color(0xFF1F2937),
                     ),
                   ),
@@ -237,7 +255,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -260,18 +278,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
               children: [
                 Text(
                   title,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 12,
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF1F2937),
+                    fontWeight: FontWeight.w300,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   value,
                   style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
                     color: Color(0xFF1F2937),
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -292,7 +310,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     IconData icon,
   ) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -316,18 +334,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Text(
                 count,
                 style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 26,
+                  fontWeight: FontWeight.w700,
                   color: color,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 title,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey[600],
-                  fontWeight: FontWeight.w500,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: Color(0xFF1F2937),
+                  fontWeight: FontWeight.w300,
                 ),
               ),
             ],
