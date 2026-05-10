@@ -17,7 +17,9 @@ class _NilaiScreenState extends State<NilaiScreen> {
   bool _isLoading = true;
   String _selectedMapel = 'PJOK';
   String _selectedTanggal = ''; // empty = show all dates
+  String _selectedKelas = 'Semua Kelas';
   List<String> _mapelList = ['PJOK', 'TIK'];
+  List<String> _kelasList = [];
   List<dynamic> _nilaiData = [];
   List<dynamic> _sekolahList = [];
   List<dynamic> _siswaList = [];
@@ -25,6 +27,7 @@ class _NilaiScreenState extends State<NilaiScreen> {
   @override
   void initState() {
     super.initState();
+    _loadKelas();
     _loadMapelAndNilai();
   }
 
@@ -32,7 +35,20 @@ class _NilaiScreenState extends State<NilaiScreen> {
   void didUpdateWidget(covariant NilaiScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.sekolah != widget.sekolah) {
+      _loadKelas();
       _loadMapelAndNilai();
+    }
+  }
+
+  Future<void> _loadKelas() async {
+    try {
+      final kelasData = await _apiService.getKelas(sekolah: widget.sekolah);
+      setState(() {
+        _kelasList = ['Semua Kelas', ...kelasData.map((e) => e.toString())];
+        _selectedKelas = 'Semua Kelas';
+      });
+    } catch (e) {
+      debugPrint("Error loading kelas: $e");
     }
   }
 
@@ -44,17 +60,18 @@ class _NilaiScreenState extends State<NilaiScreen> {
       // Fetch ALL siswa (no sekolah filter) so dialog can pick from any school
       final siswaData = await _apiService.getSiswa();
       if (mapelData.isNotEmpty) {
-        _mapelList = mapelData
-            .map<String>((e) => e['nama'].toString())
-            .toList();
+        _mapelList = mapelData.map<String>((e) => e['nama'].toString()).toList();
         if (!_mapelList.contains(_selectedMapel) && _mapelList.isNotEmpty) {
           _selectedMapel = _mapelList.first;
         }
       }
+      final kelasFilter =
+          (_selectedKelas != 'Semua Kelas') ? _selectedKelas : null;
       final data = await _apiService.getNilai(
         _selectedMapel,
         sekolah: widget.sekolah,
         tanggal: _selectedTanggal,
+        kelas: kelasFilter,
       );
       setState(() {
         _nilaiData = data;
@@ -113,21 +130,6 @@ class _NilaiScreenState extends State<NilaiScreen> {
         'Sabtu',
         'Minggu',
       ];
-      const bulanList = [
-        '',
-        'Januari',
-        'Februari',
-        'Maret',
-        'April',
-        'Mei',
-        'Juni',
-        'Juli',
-        'Agustus',
-        'September',
-        'Oktober',
-        'November',
-        'Desember',
-      ];
 
       final hari = hariList[dt.weekday];
       final tanggalNum = dt.day.toString().padLeft(2, '0');
@@ -161,12 +163,12 @@ class _NilaiScreenState extends State<NilaiScreen> {
 
   void _showNilaiDialog({Map<String, dynamic>? nilai}) {
     String? selectedNis = nilai?['nis']?.toString();
-    String selectedNama = nilai?['nama'] ?? '';
+    String selectedNama = nilai?['nama']?.toString() ?? '';
     final nilaiC = TextEditingController(
       text: nilai?['nilai']?.toString() ?? '',
     );
-    String mapel = nilai?['mapel'] ?? _selectedMapel;
-    String sekolah = nilai?['sekolah'] ?? widget.sekolah ?? 'Semua';
+    String mapel = nilai?['mapel']?.toString() ?? _selectedMapel;
+    String sekolah = nilai?['sekolah']?.toString() ?? widget.sekolah ?? 'Semua';
     final isEdit = nilai != null;
     // Default to today's date for new entries, or existing date for edit
     String tanggal = nilai?['tanggal'] ?? '';
@@ -617,11 +619,16 @@ class _NilaiScreenState extends State<NilaiScreen> {
               style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold),
             ),
             pw.SizedBox(height: 8),
-            if (widget.sekolah != null)
-              pw.Text(
-                'Sekolah: ${widget.sekolah}',
-                style: const pw.TextStyle(fontSize: 14),
-              ),
+            pw.Text(
+              'Sekolah: ${widget.sekolah ?? "Semua Sekolah"}',
+              style: const pw.TextStyle(fontSize: 14),
+            ),
+            pw.SizedBox(height: 4),
+            pw.Text(
+              'Kelas: $_selectedKelas',
+              style: const pw.TextStyle(fontSize: 14),
+            ),
+            pw.SizedBox(height: 4),
             pw.Text(
               'Tanggal: ${DateTime.now().toString().split(' ')[0]}',
               style: const pw.TextStyle(fontSize: 14),
@@ -633,7 +640,6 @@ class _NilaiScreenState extends State<NilaiScreen> {
                 'No',
                 'Tanggal',
                 'Nama Siswa',
-                'NIS',
                 'Mapel',
                 'Nilai',
                 'Sekolah',
@@ -644,7 +650,6 @@ class _NilaiScreenState extends State<NilaiScreen> {
                   '${i + 1}',
                   d['tanggal'] ?? '-',
                   d['nama'] ?? '-',
-                  d['nis'] ?? '-',
                   d['mapel'] ?? '-',
                   '${d['nilai'] ?? 0}',
                   d['sekolah'] ?? '-',
@@ -658,7 +663,7 @@ class _NilaiScreenState extends State<NilaiScreen> {
               cellAlignments: {
                 1: pw.Alignment.centerLeft,
                 2: pw.Alignment.centerLeft,
-                6: pw.Alignment.centerLeft,
+                5: pw.Alignment.centerLeft,
               },
             ),
           ],
@@ -806,6 +811,63 @@ class _NilaiScreenState extends State<NilaiScreen> {
                   ),
                 ),
               ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+            child: Container(
+              constraints: const BoxConstraints(minHeight: 48),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey[200]!, width: 1),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  isExpanded: true,
+                  value: _kelasList.contains(_selectedKelas)
+                      ? _selectedKelas
+                      : null,
+                  hint: const Text('Pilih Kelas', style: TextStyle(fontSize: 13)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 0,
+                  ),
+                  items: _kelasList
+                      .map(
+                        (k) => DropdownMenuItem(
+                          value: k,
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.class_rounded,
+                                size: 16,
+                                color: Color(0xFF6366F1),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  k,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (v) {
+                    if (v != null) {
+                      setState(() => _selectedKelas = v);
+                      _loadMapelAndNilai();
+                    }
+                  },
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 12),

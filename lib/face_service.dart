@@ -18,6 +18,12 @@ class FaceService {
     final dir = await getApplicationDocumentsDirectory();
     final modelFile = File('${dir.path}/model/vggface.tflite');
 
+    // If file exists but is too small (e.g. interrupted download), delete it
+    if (modelFile.existsSync() && modelFile.lengthSync() < 10 * 1024 * 1024) {
+      d.log("Model file too small (${modelFile.lengthSync()} bytes), deleting...");
+      await modelFile.delete();
+    }
+
     if (!modelFile.existsSync()) {
       d.log("Model missing, downloading...");
       await _downloadModel(modelFile);
@@ -25,14 +31,21 @@ class FaceService {
 
     if (modelFile.existsSync()) {
       _modelPath = modelFile.path;
-      await _channel.invokeMethod('initFaceHelper', {'modelPath': _modelPath});
+      try {
+        await _channel.invokeMethod('initFaceHelper', {'modelPath': _modelPath});
+      } on PlatformException catch (e) {
+        if (e.code == 'INIT_ERROR' || e.message?.contains('flatbuffer') == true) {
+          d.log("Model initialization failed, file might be corrupted. Deleting...");
+          await modelFile.delete();
+        }
+        rethrow;
+      }
     } else {
       throw Exception("Gagal mengunduh model wajah.");
     }
   }
 
   Future<void> _downloadModel(File file) async {
-    file.createSync(recursive: true);
     final response = await http.get(
       Uri.parse('https://janissari.id/modelling/vggface2.tflite'),
     );
@@ -41,6 +54,9 @@ class FaceService {
       throw Exception("Gagal mengunduh file model: ${response.statusCode}");
     }
 
+    if (!file.parent.existsSync()) {
+      file.parent.createSync(recursive: true);
+    }
     await file.writeAsBytes(response.bodyBytes);
   }
 

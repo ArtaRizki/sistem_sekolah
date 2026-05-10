@@ -62,8 +62,8 @@ class _MapelScreenState extends State<MapelScreen> {
   }
 
   void _showDialog({Map<String, dynamic>? mapel}) {
-    final namaC = TextEditingController(text: mapel?['nama'] ?? '');
-    final kodeC = TextEditingController(text: mapel?['kode'] ?? '');
+    final namaC = TextEditingController(text: mapel?['nama']?.toString() ?? '');
+    final kodeC = TextEditingController(text: mapel?['kode']?.toString() ?? '');
     final isEdit = mapel != null;
 
     // School assignment state

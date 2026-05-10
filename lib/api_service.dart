@@ -102,9 +102,12 @@ class ApiService {
 
   Future<List<dynamic>> getSiswa({String? kelas, String? sekolah}) async {
     var params = 'action=getSiswa';
-    if (kelas != null && kelas.isNotEmpty)
+    if (kelas != null && kelas.isNotEmpty) {
       params += '&kelas=${Uri.encodeComponent(kelas)}';
-    if (sekolah != null) params += '&sekolah=${Uri.encodeComponent(sekolah)}';
+    }
+    if (sekolah != null) {
+      params += '&sekolah=${Uri.encodeComponent(sekolah)}';
+    }
     final url = Uri.parse('$baseUrl?$params');
     try {
       final response = await http.get(url);
@@ -176,13 +179,17 @@ class ApiService {
     String mapel, {
     String? sekolah,
     String? tanggal,
+    String? kelas,
   }) async {
     final s = sekolah != null ? '&sekolah=${Uri.encodeComponent(sekolah)}' : '';
     final t = tanggal != null && tanggal.isNotEmpty
         ? '&tanggal=${Uri.encodeComponent(tanggal)}'
         : '';
+    final k = kelas != null && kelas.isNotEmpty
+        ? '&kelas=${Uri.encodeComponent(kelas)}'
+        : '';
     final url = Uri.parse(
-      '$baseUrl?action=getNilai&mapel=${Uri.encodeComponent(mapel)}$s$t',
+      '$baseUrl?action=getNilai&mapel=${Uri.encodeComponent(mapel)}$s$t$k',
     );
     try {
       final response = await http.get(url);

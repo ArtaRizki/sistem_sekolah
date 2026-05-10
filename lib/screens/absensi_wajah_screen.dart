@@ -13,6 +13,7 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
     with SingleTickerProviderStateMixin {
   final FaceService _faceService = FaceService();
   bool _isInitializing = true;
+  String? _initError;
   bool _isProcessing = false;
   String _status = "Siap";
   late AnimationController _animationController;
@@ -47,16 +48,26 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
   }
 
   Future<void> _initService() async {
+    setState(() {
+      _isInitializing = true;
+      _initError = null;
+    });
     try {
       await _faceService.init();
+      if (mounted) {
+        setState(() {
+          _isInitializing = false;
+          _initError = null;
+        });
+      }
     } catch (e) {
       debugPrint("Init error: $e");
       if (mounted) {
+        setState(() {
+          _isInitializing = false;
+          _initError = e.toString();
+        });
         _showErrorSnackBar("Gagal menginisialisasi sistem wajah: $e");
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isInitializing = false);
       }
     }
   }
@@ -574,44 +585,69 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
 
   @override
   Widget build(BuildContext context) {
-    if (_isInitializing) {
+    if (_isInitializing || _initError != null) {
       return Scaffold(
         body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ScaleTransition(
-                scale: Tween(begin: 0.8, end: 1.0).animate(
-                  CurvedAnimation(
-                    parent: _animationController,
-                    curve: Curves.easeInOut,
+          child: Padding(
+            padding: const EdgeInsets.all(32.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ScaleTransition(
+                  scale: Tween(begin: 0.8, end: 1.0).animate(
+                    CurvedAnimation(
+                      parent: _animationController,
+                      curve: Curves.easeInOut,
+                    ),
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: (_initError != null ? Colors.red : const Color(0xFF6366F1)).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Icon(
+                      _initError != null ? Icons.error_outline_rounded : Icons.face_rounded,
+                      size: 60,
+                      color: _initError != null ? Colors.red : const Color(0xFF6366F1),
+                    ),
                   ),
                 ),
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF6366F1).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(20),
+                const SizedBox(height: 32),
+                if (_initError == null) 
+                  const CircularProgressIndicator(color: Color(0xFF6366F1)),
+                const SizedBox(height: 24),
+                Text(
+                  _initError ?? "Menginisialisasi Model Wajah...",
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: _initError != null ? Colors.red : const Color(0xFF1F2937),
+                    fontWeight: FontWeight.w500,
                   ),
-                  child: const Icon(
-                    Icons.face_rounded,
-                    size: 60,
-                    color: Color(0xFF6366F1),
+                  textAlign: TextAlign.center,
+                ),
+                if (_initError != null) ...[
+                  const SizedBox(height: 32),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: _initService,
+                      icon: const Icon(Icons.refresh_rounded),
+                      label: const Text("Coba Lagi"),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF6366F1),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 32),
-              const CircularProgressIndicator(color: Color(0xFF6366F1)),
-              const SizedBox(height: 24),
-              const Text(
-                "Menginisialisasi Model Wajah...",
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF1F2937),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text("Kembali"),
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
       );

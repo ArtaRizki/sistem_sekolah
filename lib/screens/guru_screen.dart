@@ -47,13 +47,13 @@ class _GuruScreenState extends State<GuruScreen> {
   }
 
   void _showGuruDialog({Map<String, dynamic>? guru}) {
-    final namaC = TextEditingController(text: guru?['nama'] ?? '');
-    final nipC = TextEditingController(text: guru?['nip'] ?? '');
-    final mapelC = TextEditingController(text: guru?['mapel'] ?? '');
+    final namaC = TextEditingController(text: guru?['nama']?.toString() ?? '');
+    final nipC = TextEditingController(text: guru?['nip']?.toString() ?? '');
+    final mapelC = TextEditingController(text: guru?['mapel']?.toString() ?? '');
     String sekolah =
-        guru?['sekolah'] ??
+        guru?['sekolah']?.toString() ??
         widget.sekolah ??
-        (_sekolahList.isNotEmpty ? _sekolahList.first['nama'] : '');
+        (_sekolahList.isNotEmpty ? _sekolahList.first['nama']?.toString() : '') ?? '';
     final isEdit = guru != null;
 
     showDialog(

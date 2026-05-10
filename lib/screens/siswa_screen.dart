@@ -51,11 +51,11 @@ class _SiswaScreenState extends State<SiswaScreen> {
   }
 
   void _showSiswaDialog({Map<String, dynamic>? siswa}) {
-    final namaC = TextEditingController(text: siswa?['nama'] ?? '');
-    final nisC = TextEditingController(text: siswa?['nis'] ?? '');
-    String selectedKelas = siswa?['kelas'] ?? '';
-    String jk = siswa?['jk'] ?? 'L';
-    String sekolah = siswa?['sekolah'] ?? widget.sekolah ?? (_sekolahList.isNotEmpty ? _sekolahList.first['nama'] : '');
+    final namaC = TextEditingController(text: siswa?['nama']?.toString() ?? '');
+    final nisC = TextEditingController(text: siswa?['nis']?.toString() ?? '');
+    String selectedKelas = siswa?['kelas']?.toString() ?? '';
+    String jk = siswa?['jk']?.toString() ?? 'L';
+    String sekolah = siswa?['sekolah']?.toString() ?? widget.sekolah ?? (_sekolahList.isNotEmpty ? _sekolahList.first['nama'] : '');
     final isEdit = siswa != null;
 
     List<String> getClassesForSekolah(String sekolahNama) {
@@ -96,7 +96,7 @@ class _SiswaScreenState extends State<SiswaScreen> {
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
                     isExpanded: true,
-                    value: jk,
+                    initialValue: jk,
                     decoration: const InputDecoration(labelText: 'Jenis Kelamin', border: OutlineInputBorder()),
                     items: const [
                       DropdownMenuItem(value: 'L', child: Text('Laki-laki')),
@@ -107,29 +107,29 @@ class _SiswaScreenState extends State<SiswaScreen> {
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
                     isExpanded: true,
-                    value: sekolah.isNotEmpty ? sekolah : null,
+                    initialValue: sekolah.isNotEmpty ? sekolah : null,
                     decoration: const InputDecoration(labelText: 'Sekolah', border: OutlineInputBorder()),
                     items: _sekolahList.map<DropdownMenuItem<String>>((s) => DropdownMenuItem(value: s['nama'], child: Text(s['nama'], overflow: TextOverflow.ellipsis))).toList(),
                     onChanged: (v) => setDialogState(() {
                       sekolah = v!;
-                      selectedKelas = ''; // Reset kelas when sekolah changes
+                      selectedKelas = ''; 
                     }),
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
                     key: ValueKey('kelas_$sekolah'),
                     isExpanded: true,
-                    value: selectedKelas.isNotEmpty ? selectedKelas : null,
+                    initialValue: selectedKelas.isNotEmpty ? selectedKelas : null,
                     decoration: const InputDecoration(labelText: 'Kelas', border: OutlineInputBorder()),
                     items: classes.map((c) {
                       String display = c;
-                      if (c == '7') display = 'Kelas 7 (VII)';
-                      else if (c == '8') display = 'Kelas 8 (VIII)';
-                      else if (c == '9') display = 'Kelas 9 (IX)';
-                      else if (c == '10') display = 'Kelas 10 (X)';
-                      else if (c == '11') display = 'Kelas 11 (XI)';
-                      else if (c == '12') display = 'Kelas 12 (XII)';
-                      else display = 'Kelas $c';
+                      if (c == '7') { display = 'Kelas 7 (VII)'; }
+                      else if (c == '8') { display = 'Kelas 8 (VIII)'; }
+                      else if (c == '9') { display = 'Kelas 9 (IX)'; }
+                      else if (c == '10') { display = 'Kelas 10 (X)'; }
+                      else if (c == '11') { display = 'Kelas 11 (XI)'; }
+                      else if (c == '12') { display = 'Kelas 12 (XII)'; }
+                      else { display = 'Kelas $c'; }
                       return DropdownMenuItem(value: c, child: Text(display, overflow: TextOverflow.ellipsis));
                     }).toList(),
                     onChanged: (v) => setDialogState(() => selectedKelas = v!),

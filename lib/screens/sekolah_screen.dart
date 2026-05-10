@@ -36,9 +36,9 @@ class _SekolahScreenState extends State<SekolahScreen> {
   }
 
   void _showDialog({Map<String, dynamic>? sekolah}) {
-    final namaC = TextEditingController(text: sekolah?['nama'] ?? '');
-    final alamatC = TextEditingController(text: sekolah?['alamat'] ?? '');
-    String tingkat = sekolah?['tingkat'] ?? 'MTS';
+    final namaC = TextEditingController(text: sekolah?['nama']?.toString() ?? '');
+    final alamatC = TextEditingController(text: sekolah?['alamat']?.toString() ?? '');
+    String tingkat = sekolah?['tingkat']?.toString() ?? 'MTS';
     final isEdit = sekolah != null;
 
     showDialog(
