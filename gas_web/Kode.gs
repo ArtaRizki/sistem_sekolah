@@ -91,7 +91,7 @@ function doGet(e) {
     else if (action === "getMapel") result = getMapelData();
     else if (action === "getSekolah") result = getSekolahData();
     else if (action === "getNilai") result = getNilaiData(e.parameter.mapel, sekolah, e.parameter.tanggal || "");
-    else if (action === "getRekap") result = getRekapData(e.parameter.bulan, sekolah);
+    else if (action === "getRekap") result = getRekapData(e.parameter.bulan, sekolah, e.parameter.kelas);
     else if (action === "getRegisteredFace") result = getRegisteredFaceData(e.parameter.id);
     else if (action === "getKelas") result = getKelasData(sekolah);
     else if (action === "getSiswaWajah") result = getSiswaWajahData(sekolah);
@@ -140,7 +140,44 @@ function doPost(e) {
       result = updateRowByKey("Siswa", data.rowKey, [data.nama, data.nis, data.jk, data.kelas, data.sekolah]);
     }
     else if (action === "deleteSiswa") {
+      var rowParts = data.rowKey.split("|");
+      var namaSiswa = rowParts[0];
+      var nisSiswa = rowParts[1];
+      
       result = deleteRowByKey("Siswa", data.rowKey);
+      
+      if (result.status === "success") {
+        // Cascade delete Wajah
+        if (nisSiswa) {
+           var wSheet = getSheet("Wajah");
+           var wValues = wSheet.getDataRange().getValues();
+           for (var w = wValues.length - 1; w >= 1; w--) {
+             if (wValues[w][0].toString() === nisSiswa) {
+               wSheet.deleteRow(w + 1);
+             }
+           }
+           
+           // Cascade delete Nilai (NIS is col 2 / index 1)
+           var nSheet = getSheet("Nilai");
+           var nValues = nSheet.getDataRange().getValues();
+           for (var n = nValues.length - 1; n >= 1; n--) {
+             if (nValues[n][1].toString() === nisSiswa) {
+               nSheet.deleteRow(n + 1);
+             }
+           }
+        }
+        
+        // Cascade delete Absensi (Nama is col 2 / index 1)
+        if (namaSiswa) {
+           var aSheet = getSheet("Absensi");
+           var aValues = aSheet.getDataRange().getValues();
+           for (var a = aValues.length - 1; a >= 1; a--) {
+             if (aValues[a][1].toString() === namaSiswa) {
+               aSheet.deleteRow(a + 1);
+             }
+           }
+        }
+      }
     }
 
     // ---- MAPEL CRUD (with Sekolah assignment) ----
@@ -547,13 +584,25 @@ function getNilaiData(mapel, sekolah, tanggal) {
   return data;
 }
 
-function getRekapData(bulan, sekolah) {
+function getRekapData(bulan, sekolah, kelas) {
   var sheet = getSheet("Absensi");
   var values = sheet.getDataRange().getValues();
   var rekap = {};
   
   var bulanNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni",
                     "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+                    
+  // Jika filter kelas aktif, ambil mapping Nama -> Kelas dari sheet Siswa
+  var mapSiswaKelas = {};
+  if (kelas) {
+    var sheetSiswa = getSheet("Siswa");
+    var valuesSiswa = sheetSiswa.getDataRange().getValues();
+    for (var j = 1; j < valuesSiswa.length; j++) {
+       var namaSiswa = valuesSiswa[j][0];
+       var kelasSiswa = valuesSiswa[j][3];
+       mapSiswaKelas[namaSiswa] = kelasSiswa;
+    }
+  }
   
   for (var i = 1; i < values.length; i++) {
     var tanggalRaw = values[i][0];
@@ -562,6 +611,11 @@ function getRekapData(bulan, sekolah) {
     var absenSekolah = values[i][5] || "";
     
     if (sekolah && absenSekolah.toString() !== sekolah) continue;
+    
+    if (kelas) {
+       var kls = mapSiswaKelas[nama] || "";
+       if (kls.toString() !== kelas) continue;
+    }
     
     // Parse the date and convert to "Mei 2026" format for comparison
     if (bulan) {
@@ -574,7 +628,9 @@ function getRekapData(bulan, sekolah) {
       }
     }
     
-    if (!rekap[nama]) rekap[nama] = { nama: nama, hadir: 0, izin: 0, sakit: 0, alpa: 0, total: 0, sekolah: absenSekolah };
+    var klsSiswa = (mapSiswaKelas && mapSiswaKelas[nama]) ? mapSiswaKelas[nama] : "";
+    
+    if (!rekap[nama]) rekap[nama] = { nama: nama, hadir: 0, izin: 0, sakit: 0, alpa: 0, total: 0, sekolah: absenSekolah, kelas: klsSiswa };
     rekap[nama].total++;
     
     if (status === "Hadir") rekap[nama].hadir++;

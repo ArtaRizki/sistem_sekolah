@@ -24,11 +24,15 @@ class _RekapScreenState extends State<RekapScreen> {
     'Mei 2026',
   ];
 
+  String? _selectedKelas;
+  List<String> _kelasList = [];
+
   List<dynamic> _rekapData = [];
 
   @override
   void initState() {
     super.initState();
+    _loadKelas();
     _loadRekap();
   }
 
@@ -36,14 +40,28 @@ class _RekapScreenState extends State<RekapScreen> {
   void didUpdateWidget(covariant RekapScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.sekolah != widget.sekolah) {
+      _loadKelas();
       _loadRekap();
+    }
+  }
+
+  Future<void> _loadKelas() async {
+    try {
+      final kelasData = await _apiService.getKelas(sekolah: widget.sekolah);
+      setState(() {
+        _kelasList = ['Semua Kelas', ...kelasData.map((e) => e.toString())];
+        _selectedKelas = 'Semua Kelas';
+      });
+    } catch (e) {
+      debugPrint("Error loading kelas: $e");
     }
   }
 
   Future<void> _loadRekap() async {
     setState(() => _isLoading = true);
     try {
-      final data = await _apiService.getRekap(_selectedBulan, sekolah: widget.sekolah);
+      final kelasFilter = (_selectedKelas != null && _selectedKelas != 'Semua Kelas') ? _selectedKelas : null;
+      final data = await _apiService.getRekap(_selectedBulan, sekolah: widget.sekolah, kelas: kelasFilter);
       setState(() {
         _rekapData = data;
         _isLoading = false;
@@ -56,6 +74,24 @@ class _RekapScreenState extends State<RekapScreen> {
 
   Future<void> _generatePdf() async {
     final pdf = pw.Document();
+
+    final now = DateTime.now();
+    final months = [
+      '',
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember'
+    ];
+    final formattedDate = '${now.day} ${months[now.month]} ${now.year}';
 
     pdf.addPage(
       pw.Page(
@@ -71,7 +107,17 @@ class _RekapScreenState extends State<RekapScreen> {
                   fontWeight: pw.FontWeight.bold,
                 ),
               ),
-              pw.SizedBox(height: 8),
+              pw.SizedBox(height: 12),
+              pw.Text(
+                'Sekolah: ${widget.sekolah ?? "Semua Sekolah"}',
+                style: const pw.TextStyle(fontSize: 16),
+              ),
+              pw.SizedBox(height: 4),
+              pw.Text(
+                'Kelas: ${_selectedKelas ?? "Semua Kelas"}',
+                style: const pw.TextStyle(fontSize: 16),
+              ),
+              pw.SizedBox(height: 4),
               pw.Text(
                 'Bulan: $_selectedBulan',
                 style: const pw.TextStyle(fontSize: 16),
@@ -117,7 +163,7 @@ class _RekapScreenState extends State<RekapScreen> {
                 child: pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.center,
                   children: [
-                    pw.Text('Purwakarta, ${DateTime.now().toString().split(' ')[0]}'),
+                    pw.Text('Purwakarta, $formattedDate'),
                     pw.SizedBox(height: 40),
                     pw.Text(
                       'Dheri Rama Permadhi, S.Pd',
@@ -161,58 +207,105 @@ class _RekapScreenState extends State<RekapScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Pilih Bulan',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF1F2937),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey[200]!, width: 1),
-                  ),
-                  child: DropdownButton<String>(
-                    isExpanded: true,
-                    value: _selectedBulan,
-                    underline: const SizedBox(),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Pilih Bulan',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF1F2937),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey[200]!, width: 1),
+                            ),
+                            child: DropdownButton<String>(
+                              isExpanded: true,
+                              value: _selectedBulan,
+                              underline: const SizedBox(),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                              items: _bulanList.map((String value) {
+                                return DropdownMenuItem<String>(
+                                  value: value,
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.calendar_month_rounded, size: 16, color: Color(0xFF6366F1)),
+                                      const SizedBox(width: 8),
+                                      Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                              onChanged: (String? newValue) {
+                                if (newValue != null) {
+                                  setState(() => _selectedBulan = newValue);
+                                  _loadRekap();
+                                }
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    items: _bulanList.map((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.calendar_month_rounded,
-                              size: 18,
-                              color: Color(0xFF6366F1),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Pilih Kelas',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF1F2937),
                             ),
-                            const SizedBox(width: 12),
-                            Text(
-                              value,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey[200]!, width: 1),
                             ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (String? newValue) {
-                      if (newValue != null) {
-                        setState(() => _selectedBulan = newValue);
-                        _loadRekap();
-                      }
-                    },
-                  ),
+                            child: DropdownButton<String>(
+                              isExpanded: true,
+                              value: _selectedKelas,
+                              hint: const Text('Semua Kelas', style: TextStyle(fontSize: 12)),
+                              underline: const SizedBox(),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                              items: _kelasList.map((String value) {
+                                return DropdownMenuItem<String>(
+                                  value: value,
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.class_rounded, size: 16, color: Color(0xFF6366F1)),
+                                      const SizedBox(width: 8),
+                                      Expanded(child: Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis)),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                              onChanged: (String? newValue) {
+                                if (newValue != null) {
+                                  setState(() => _selectedKelas = newValue);
+                                  _loadRekap();
+                                }
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

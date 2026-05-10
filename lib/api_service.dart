@@ -180,10 +180,17 @@ class ApiService {
     }
   }
 
-  Future<List<dynamic>> getRekap(String bulan, {String? sekolah}) async {
+  Future<List<dynamic>> getRekap(
+    String bulan, {
+    String? sekolah,
+    String? kelas,
+  }) async {
     final s = sekolah != null ? '&sekolah=${Uri.encodeComponent(sekolah)}' : '';
+    final k = kelas != null && kelas.isNotEmpty
+        ? '&kelas=${Uri.encodeComponent(kelas)}'
+        : '';
     final url = Uri.parse(
-      '$baseUrl?action=getRekap&bulan=${Uri.encodeComponent(bulan)}$s',
+      '$baseUrl?action=getRekap&bulan=${Uri.encodeComponent(bulan)}$s$k',
     );
     try {
       final response = await http.get(url);
