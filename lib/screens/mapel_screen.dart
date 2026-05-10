@@ -137,12 +137,14 @@ class _MapelScreenState extends State<MapelScreen> {
                         setDialogState(() {
                           if (val == true) {
                             selectedSchools.remove('Semua');
-                            if (!selectedSchools.contains(nama))
+                            if (!selectedSchools.contains(nama)) {
                               selectedSchools.add(nama);
+                            }
                           } else {
                             selectedSchools.remove(nama);
-                            if (selectedSchools.isEmpty)
+                            if (selectedSchools.isEmpty) {
                               selectedSchools.add('Semua');
+                            }
                           }
                         });
                       },

@@ -64,8 +64,11 @@ class _SiswaScreenState extends State<SiswaScreen> {
       String tingkat = (s['tingkat']?.toString() ?? '').toUpperCase();
       if (tingkat.isEmpty) {
         final nameLower = sekolahNama.toLowerCase();
-        if (nameLower.contains('sma') || nameLower.contains('ma ') || nameLower.startsWith('ma')) tingkat = 'SMA';
-        else if (nameLower.contains('smp') || nameLower.contains('mts')) tingkat = 'SMP';
+        if (nameLower.contains('sma') || nameLower.contains('ma ') || nameLower.startsWith('ma')) {
+          tingkat = 'SMA';
+        } else if (nameLower.contains('smp') || nameLower.contains('mts')) {
+          tingkat = 'SMP';
+        }
       }
 
       if (tingkat == 'SMP' || tingkat == 'MTS') return ['7', '8', '9'];
@@ -222,13 +225,13 @@ class _SiswaScreenState extends State<SiswaScreen> {
                               const DropdownMenuItem<String>(value: null, child: Text('Semua Kelas')),
                               ..._kelasList.map((k) {
                                 String display = k;
-                                if (k == '7') display = 'Kelas 7 (VII)';
-                                else if (k == '8') display = 'Kelas 8 (VIII)';
-                                else if (k == '9') display = 'Kelas 9 (IX)';
-                                else if (k == '10') display = 'Kelas 10 (X)';
-                                else if (k == '11') display = 'Kelas 11 (XI)';
-                                else if (k == '12') display = 'Kelas 12 (XII)';
-                                else display = 'Kelas $k';
+                                if (k == '7') { display = 'Kelas 7 (VII)'; }
+                                else if (k == '8') { display = 'Kelas 8 (VIII)'; }
+                                else if (k == '9') { display = 'Kelas 9 (IX)'; }
+                                else if (k == '10') { display = 'Kelas 10 (X)'; }
+                                else if (k == '11') { display = 'Kelas 11 (XI)'; }
+                                else if (k == '12') { display = 'Kelas 12 (XII)'; }
+                                else { display = 'Kelas $k'; }
                                 return DropdownMenuItem(value: k, child: Row(children: [
                                   const Icon(Icons.class_rounded, size: 18, color: Color(0xFF6366F1)),
                                   const SizedBox(width: 12),
