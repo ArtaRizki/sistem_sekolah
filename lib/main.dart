@@ -279,7 +279,7 @@ class _MainLayoutState extends State<MainLayout> {
       label: Text('Guru'),
     ),
     NavigationRailDestination(
-      icon: Icon(Icons.school_rounded),
+      icon: Icon(Icons.business_rounded),
       label: Text('Sekolah'),
     ),
     NavigationRailDestination(
@@ -378,7 +378,7 @@ class _MainLayoutState extends State<MainLayout> {
                   ...sheetList.map(
                     (s) => ListTile(
                       leading: const Icon(
-                        Icons.school_rounded,
+                        Icons.business_rounded,
                         color: Color(0xFF8B5CF6),
                       ),
                       title: Text(s['nama'] ?? '-'),
@@ -428,7 +428,7 @@ class _MainLayoutState extends State<MainLayout> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(
-              Icons.school_rounded,
+              Icons.business_rounded,
               size: 16,
               color: Color(0xFF6366F1),
             ),
@@ -467,13 +467,27 @@ class _MainLayoutState extends State<MainLayout> {
                 MediaQuery.of(context).size.width < 400 ? 88 : 56,
               ),
               child: AppBar(
-                title: const Text(
-                  'DRP Absensi',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 18,
-                    color: Color(0xFF1F2937),
-                  ),
+                title: Row(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: Image.asset(
+                        'assets/drp_absensi_logo.jpeg',
+                        width: 28,
+                        height: 28,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    const Text(
+                      'DRP Absensi',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 18,
+                        color: Color(0xFF1F2937),
+                      ),
+                    ),
+                  ],
                 ),
                 toolbarHeight: MediaQuery.of(context).size.width < 400
                     ? 44
@@ -526,10 +540,14 @@ class _MainLayoutState extends State<MainLayout> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        const Icon(
-                          Icons.school_rounded,
-                          size: 40,
-                          color: Colors.white,
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.asset(
+                            'assets/drp_absensi_logo.jpeg',
+                            width: 50,
+                            height: 50,
+                            fit: BoxFit.cover,
+                          ),
                         ),
                         const SizedBox(height: 8),
                         const Text(
@@ -600,10 +618,14 @@ class _MainLayoutState extends State<MainLayout> {
                             ),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(
-                            Icons.school_rounded,
-                            size: 28,
-                            color: Colors.white,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.asset(
+                              'assets/drp_absensi_logo.jpeg',
+                              width: 32,
+                              height: 32,
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -699,7 +721,7 @@ class _MainLayoutState extends State<MainLayout> {
       Icons.home_rounded,
       Icons.menu_book_rounded,
       Icons.person_rounded,
-      Icons.school_rounded,
+      Icons.business_rounded,
       Icons.people_rounded,
       Icons.assessment_rounded,
       Icons.bar_chart_rounded,

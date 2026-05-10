@@ -147,7 +147,7 @@ class _SekolahScreenState extends State<SekolahScreen> {
                             leading: Container(
                               width: 48, height: 48,
                               decoration: BoxDecoration(color: c.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-                              child: Icon(Icons.school_rounded, color: c),
+                              child: Icon(Icons.business_rounded, color: c),
                             ),
                             title: Text(sekolah['nama'] ?? '-', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1F2937))),
                             subtitle: Row(children: [

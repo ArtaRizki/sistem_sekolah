@@ -132,7 +132,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                       ),
                       const Icon(
-                        Icons.school_rounded,
+                        Icons.business_rounded,
                         size: 60,
                         color: Colors.white30,
                       ),
@@ -206,7 +206,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       'Sekolah',
                       _data['totalSekolah']?.toString() ?? '0',
                       const Color(0xFF06B6D4),
-                      Icons.school_rounded,
+                      Icons.business_rounded,
                     ),
                     _buildStatCard(
                       context,
@@ -233,7 +233,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ...(_data['sekolah'] as List).map(
                     (s) => _buildInfoCard(
                       context,
-                      Icons.school_rounded,
+                      Icons.business_rounded,
                       s['nama'] ?? '-',
                       s['alamat'] ?? '-',
                       const Color(0xFF8B5CF6),

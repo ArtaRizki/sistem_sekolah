@@ -79,9 +79,9 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
       return;
     }
 
-    String? selectedNis;
+    Map<String, dynamic>? selectedSiswa;
     if (mounted) {
-      selectedNis = await showDialog<String>(
+      selectedSiswa = await showDialog<Map<String, dynamic>>(
         context: context,
         builder: (ctx) => AlertDialog(
           title: const Text("Pilih Siswa"),
@@ -95,7 +95,7 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
                 subtitle: Text(
                   "NIS: ${siswaList[i]['nis']} • ${siswaList[i]['kelas']}",
                 ),
-                onTap: () => Navigator.pop(ctx, siswaList[i]['nis'].toString()),
+                onTap: () => Navigator.pop(ctx, siswaList[i] as Map<String, dynamic>),
               ),
             ),
           ),
@@ -103,7 +103,9 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
       );
     }
 
-    if (selectedNis == null) return;
+    if (selectedSiswa == null) return;
+    final String selectedNis = selectedSiswa['nis'].toString();
+    final String selectedNama = selectedSiswa['nama'].toString();
 
     setState(() {
       _isProcessing = true;
@@ -120,7 +122,7 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
           await _loadRegisteredFaces();
           _showSuccessDialog(
             "Wajah Berhasil Didaftarkan!",
-            "Wajah siswa dengan NIS $selectedNis telah tersimpan.",
+            "Wajah siswa $selectedNama telah tersimpan.",
             Icons.check_circle_rounded,
           );
         }
@@ -648,10 +650,14 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
                       width: 2,
                     ),
                   ),
-                  child: const Icon(
-                    Icons.face_retouching_natural_rounded,
-                    size: 100,
-                    color: Color(0xFF6366F1),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: Image.asset(
+                      'assets/drp_absensi_logo.jpeg',
+                      width: 120,
+                      height: 120,
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 32),

@@ -210,20 +210,40 @@ function doPost(e) {
     else if (action === "addNilai") {
       var sheet = getSheet("Nilai");
       var tanggal = data.tanggal || "";
+      result = { status: "processing" }; // Reset result to avoid "Action not found" check failure
+      
       // Check for duplicate: same NIS + Mapel + Tanggal + Sekolah
       if (tanggal) {
         var existing = sheet.getDataRange().getValues();
         for (var d = 1; d < existing.length; d++) {
-          if (existing[d][1].toString() === data.nis.toString() &&
-              existing[d][2].toString() === data.mapel &&
-              existing[d][5].toString() === tanggal &&
-              existing[d][4].toString() === data.sekolah) {
-            result = { status: "error", message: "Nilai untuk siswa ini pada tanggal dan mapel tersebut sudah ada" };
+          var rowNis = existing[d][1].toString();
+          var rowMapel = existing[d][2].toString();
+          var rowSekolah = existing[d][4].toString();
+          var rowTanggal = "";
+          
+          if (existing[d][5]) {
+            try {
+              if (existing[d][5] instanceof Date) {
+                rowTanggal = Utilities.formatDate(existing[d][5], Session.getScriptTimeZone(), "yyyy-MM-dd");
+              } else {
+                rowTanggal = existing[d][5].toString();
+              }
+            } catch(e) {
+              rowTanggal = existing[d][5].toString();
+            }
+          }
+
+          if (rowNis === data.nis.toString() &&
+              rowMapel === data.mapel &&
+              rowTanggal === tanggal &&
+              rowSekolah === data.sekolah) {
+            result = { status: "error", message: "Nilai untuk " + data.nama + " pada tanggal " + tanggal + " dengan mapel " + data.mapel + " sudah ada" };
             break;
           }
         }
+        
         if (result.status === "error") {
-          // Already set error above, skip append
+          // Already set duplicate error above, skip append
         } else {
           sheet.appendRow([data.nama, data.nis, data.mapel, data.nilai, data.sekolah, tanggal]);
           result = { status: "success", message: "Nilai ditambahkan" };
@@ -567,17 +587,30 @@ function getNilaiData(mapel, sekolah, tanggal) {
   var data = [];
   for (var i = 1; i < values.length; i++) {
     if (!values[i][0]) continue;
-    // Col 4 = Sekolah, Col 5 = Tanggal
+    var rowTanggal = "";
+    if (values[i][5]) {
+      try {
+        if (values[i][5] instanceof Date) {
+          rowTanggal = Utilities.formatDate(values[i][5], Session.getScriptTimeZone(), "yyyy-MM-dd");
+        } else {
+          rowTanggal = values[i][5].toString();
+        }
+      } catch(e) {
+        rowTanggal = values[i][5].toString();
+      }
+    }
+
     if (sekolah && values[i][4].toString() !== sekolah) continue;
     if (mapel && values[i][2].toString() !== mapel) continue;
-    if (tanggal && values[i][5].toString() !== tanggal) continue;
+    if (tanggal && rowTanggal !== tanggal) continue;
+
     data.push({
       nama: values[i][0],
       nis: values[i][1].toString(),
       mapel: values[i][2],
       nilai: values[i][3],
       sekolah: values[i][4],
-      tanggal: values[i][5] ? values[i][5].toString() : "",
+      tanggal: rowTanggal,
       rowKey: values[i].map(function(c) { return c.toString(); }).join("|")
     });
   }

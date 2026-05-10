@@ -55,10 +55,18 @@ class ApiService {
 
       final response = await http.Response.fromStream(streamedResponse);
       _log('POST', url, requestBody: encoded, response: response);
-      return jsonDecode(response.body);
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      } else {
+        return {
+          'status': 'error',
+          'message': 'Format response tidak valid dari server'
+        };
+      }
     } catch (e) {
       _log('POST', url, requestBody: encoded, error: e);
-      return {'status': 'error', 'message': e.toString()};
+      return {'status': 'error', 'message': 'Gagal terhubung ke server: $e'};
     }
   }
 
@@ -84,7 +92,8 @@ class ApiService {
     try {
       final response = await http.get(url);
       _log('GET', url, response: response);
-      return jsonDecode(response.body);
+      final decoded = jsonDecode(response.body);
+      return decoded is List ? decoded : [];
     } catch (e) {
       _log('GET', url, error: e);
       return [];
@@ -100,7 +109,8 @@ class ApiService {
     try {
       final response = await http.get(url);
       _log('GET', url, response: response);
-      return jsonDecode(response.body);
+      final decoded = jsonDecode(response.body);
+      return decoded is List ? decoded : [];
     } catch (e) {
       _log('GET', url, error: e);
       return [];
@@ -113,7 +123,8 @@ class ApiService {
     try {
       final response = await http.get(url);
       _log('GET', url, response: response);
-      return jsonDecode(response.body);
+      final decoded = jsonDecode(response.body);
+      return decoded is List ? decoded : [];
     } catch (e) {
       _log('GET', url, error: e);
       return [];
@@ -125,7 +136,8 @@ class ApiService {
     try {
       final response = await http.get(url);
       _log('GET', url, response: response);
-      return jsonDecode(response.body);
+      final decoded = jsonDecode(response.body);
+      return decoded is List ? decoded : [];
     } catch (e) {
       _log('GET', url, error: e);
       return [];
@@ -138,7 +150,8 @@ class ApiService {
     try {
       final response = await http.get(url);
       _log('GET', url, response: response);
-      return jsonDecode(response.body);
+      final decoded = jsonDecode(response.body);
+      return decoded is List ? decoded : [];
     } catch (e) {
       _log('GET', url, error: e);
       return [];
@@ -151,7 +164,8 @@ class ApiService {
     try {
       final response = await http.get(url);
       _log('GET', url, response: response);
-      return jsonDecode(response.body);
+      final decoded = jsonDecode(response.body);
+      return decoded is List ? decoded : [];
     } catch (e) {
       _log('GET', url, error: e);
       return [];
@@ -173,7 +187,8 @@ class ApiService {
     try {
       final response = await http.get(url);
       _log('GET', url, response: response);
-      return jsonDecode(response.body);
+      final decoded = jsonDecode(response.body);
+      return decoded is List ? decoded : [];
     } catch (e) {
       _log('GET', url, error: e);
       return [];
@@ -195,7 +210,8 @@ class ApiService {
     try {
       final response = await http.get(url);
       _log('GET', url, response: response);
-      return jsonDecode(response.body);
+      final decoded = jsonDecode(response.body);
+      return decoded is List ? decoded : [];
     } catch (e) {
       _log('GET', url, error: e);
       return [];

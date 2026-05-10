@@ -530,10 +530,24 @@ class _NilaiScreenState extends State<NilaiScreen> {
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text(
-                            result['message'] ?? 'Terjadi kesalahan',
+                          content: Row(
+                            children: [
+                              const Icon(Icons.error_outline_rounded,
+                                  color: Colors.white, size: 20),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  result['message'] ?? 'Gagal menyimpan nilai',
+                                  style: const TextStyle(fontSize: 13),
+                                ),
+                              ),
+                            ],
                           ),
-                          backgroundColor: Colors.red,
+                          backgroundColor: Colors.red[600],
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                          margin: const EdgeInsets.all(16),
                         ),
                       );
                     }

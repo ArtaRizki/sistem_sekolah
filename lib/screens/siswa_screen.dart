@@ -301,7 +301,7 @@ class _SiswaScreenState extends State<SiswaScreen> {
             ]),
             const SizedBox(height: 4),
             Row(children: [
-              Icon(Icons.school_rounded, size: 14, color: Colors.grey[500]),
+              Icon(Icons.business_rounded, size: 14, color: Colors.grey[500]),
               const SizedBox(width: 6),
               Expanded(child: Text(siswa['sekolah'] ?? '-', style: const TextStyle(fontSize: 11, color: Color(0xFF1F2937), fontWeight: FontWeight.w300))),
             ]),

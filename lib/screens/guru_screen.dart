@@ -410,7 +410,7 @@ class _GuruScreenState extends State<GuruScreen> {
             ),
             child: Row(
               children: [
-                Icon(Icons.school_rounded, size: 14, color: Colors.grey[500]),
+                Icon(Icons.business_rounded, size: 14, color: Colors.grey[500]),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
