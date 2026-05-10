@@ -215,10 +215,11 @@ class _MapelScreenState extends State<MapelScreen> {
               setState(() => _isLoading = true);
               await _apiService.deleteMapel(nama);
               _loadMapel();
-              if (mounted)
+              if (mounted) {
                 ScaffoldMessenger.of(
                   context,
                 ).showSnackBar(const SnackBar(content: Text('Mapel dihapus')));
+              }
             },
             child: const Text('Hapus'),
           ),
@@ -321,12 +322,14 @@ class _MapelScreenState extends State<MapelScreen> {
                             ),
                             trailing: PopupMenuButton<String>(
                               onSelected: (value) {
-                                if (value == 'edit')
+                                if (value == 'edit') {
                                   _showDialog(
                                     mapel: Map<String, dynamic>.from(mapel),
                                   );
-                                if (value == 'delete')
+                                }
+                                if (value == 'delete') {
                                   _confirmDelete(mapel['nama']);
+                                }
                               },
                               itemBuilder: (context) => [
                                 const PopupMenuItem(

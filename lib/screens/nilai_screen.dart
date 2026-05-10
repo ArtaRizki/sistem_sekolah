@@ -492,8 +492,9 @@ class _NilaiScreenState extends State<NilaiScreen> {
                       selectedNama.isEmpty ||
                       nilaiC.text.isEmpty ||
                       sekolah.isEmpty ||
-                      tanggal.isEmpty)
+                      tanggal.isEmpty) {
                     return;
+                  }
                   Navigator.pop(ctx);
                   setState(() => _isLoading = true);
                   final n = num.tryParse(nilaiC.text) ?? 0;
