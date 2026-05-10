@@ -92,6 +92,7 @@ class _GuruScreenState extends State<GuruScreen> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
+                  isExpanded: true,
                   initialValue: sekolah.isNotEmpty ? sekolah : null,
                   decoration: const InputDecoration(
                     labelText: 'Sekolah',

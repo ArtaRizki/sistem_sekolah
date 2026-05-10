@@ -117,10 +117,10 @@ class _RekapScreenState extends State<RekapScreen> {
                 child: pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.center,
                   children: [
-                    pw.Text('Palu, ${DateTime.now().toString().split(' ')[0]}'),
+                    pw.Text('Purwakarta, ${DateTime.now().toString().split(' ')[0]}'),
                     pw.SizedBox(height: 40),
                     pw.Text(
-                      'Kepala Sekolah',
+                      'Dheri Rama Permadhi, S.Pd',
                       style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                     ),
                   ],

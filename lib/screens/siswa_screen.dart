@@ -59,13 +59,19 @@ class _SiswaScreenState extends State<SiswaScreen> {
     final isEdit = siswa != null;
 
     List<String> getClassesForSekolah(String sekolahNama) {
-      final s = _sekolahList.firstWhere((element) => element['nama'] == sekolahNama, orElse: () => null);
+      final s = _sekolahList.where((element) => element['nama'] == sekolahNama).firstOrNull;
       if (s == null) return [];
-      final tingkat = s['tingkat'] ?? 'MTS';
-      if (tingkat == 'MTS') return ['7 (VII)', '8 (VIII)', '9 (IX)'];
-      if (tingkat == 'MA') return ['10 (X)', '11 (XI)', '12 (XII)'];
+      String tingkat = (s['tingkat']?.toString() ?? '').toUpperCase();
+      if (tingkat.isEmpty) {
+        final nameLower = sekolahNama.toLowerCase();
+        if (nameLower.contains('sma') || nameLower.contains('ma ') || nameLower.startsWith('ma')) tingkat = 'SMA';
+        else if (nameLower.contains('smp') || nameLower.contains('mts')) tingkat = 'SMP';
+      }
+
+      if (tingkat == 'SMP' || tingkat == 'MTS') return ['7', '8', '9'];
+      if (tingkat == 'SMA' || tingkat == 'MA') return ['10', '11', '12'];
       if (tingkat == 'SD') return ['1', '2', '3', '4', '5', '6'];
-      return ['Lainnya'];
+      return ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
     }
 
     showDialog(
@@ -74,7 +80,8 @@ class _SiswaScreenState extends State<SiswaScreen> {
         builder: (ctx, setDialogState) {
           final classes = getClassesForSekolah(sekolah);
           if (selectedKelas.isNotEmpty && !classes.contains(selectedKelas)) {
-             // Keep it if it was manually entered before, but show it in the list
+             // Keep it if it was manually entered before, but show it in the list if missing
+             classes.add(selectedKelas);
           }
 
           return AlertDialog(
@@ -88,7 +95,8 @@ class _SiswaScreenState extends State<SiswaScreen> {
                   TextField(controller: nisC, decoration: const InputDecoration(labelText: 'NIS', border: OutlineInputBorder()), keyboardType: TextInputType.number),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    initialValue: jk,
+                    isExpanded: true,
+                    value: jk,
                     decoration: const InputDecoration(labelText: 'Jenis Kelamin', border: OutlineInputBorder()),
                     items: const [
                       DropdownMenuItem(value: 'L', child: Text('Laki-laki')),
@@ -98,7 +106,8 @@ class _SiswaScreenState extends State<SiswaScreen> {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    initialValue: sekolah.isNotEmpty ? sekolah : null,
+                    isExpanded: true,
+                    value: sekolah.isNotEmpty ? sekolah : null,
                     decoration: const InputDecoration(labelText: 'Sekolah', border: OutlineInputBorder()),
                     items: _sekolahList.map<DropdownMenuItem<String>>((s) => DropdownMenuItem(value: s['nama'], child: Text(s['nama'], overflow: TextOverflow.ellipsis))).toList(),
                     onChanged: (v) => setDialogState(() {
@@ -108,9 +117,21 @@ class _SiswaScreenState extends State<SiswaScreen> {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    initialValue: selectedKelas.isNotEmpty ? selectedKelas : null,
+                    key: ValueKey('kelas_$sekolah'),
+                    isExpanded: true,
+                    value: selectedKelas.isNotEmpty ? selectedKelas : null,
                     decoration: const InputDecoration(labelText: 'Kelas', border: OutlineInputBorder()),
-                    items: classes.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                    items: classes.map((c) {
+                      String display = c;
+                      if (c == '7') display = 'Kelas 7 (VII)';
+                      else if (c == '8') display = 'Kelas 8 (VIII)';
+                      else if (c == '9') display = 'Kelas 9 (IX)';
+                      else if (c == '10') display = 'Kelas 10 (X)';
+                      else if (c == '11') display = 'Kelas 11 (XI)';
+                      else if (c == '12') display = 'Kelas 12 (XII)';
+                      else display = 'Kelas $c';
+                      return DropdownMenuItem(value: c, child: Text(display, overflow: TextOverflow.ellipsis));
+                    }).toList(),
                     onChanged: (v) => setDialogState(() => selectedKelas = v!),
                   ),
                 ],
@@ -199,11 +220,21 @@ class _SiswaScreenState extends State<SiswaScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                             items: [
                               const DropdownMenuItem<String>(value: null, child: Text('Semua Kelas')),
-                              ..._kelasList.map((k) => DropdownMenuItem(value: k, child: Row(children: [
-                                const Icon(Icons.class_rounded, size: 18, color: Color(0xFF6366F1)),
-                                const SizedBox(width: 12),
-                                Text(k, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-                              ]))),
+                              ..._kelasList.map((k) {
+                                String display = k;
+                                if (k == '7') display = 'Kelas 7 (VII)';
+                                else if (k == '8') display = 'Kelas 8 (VIII)';
+                                else if (k == '9') display = 'Kelas 9 (IX)';
+                                else if (k == '10') display = 'Kelas 10 (X)';
+                                else if (k == '11') display = 'Kelas 11 (XI)';
+                                else if (k == '12') display = 'Kelas 12 (XII)';
+                                else display = 'Kelas $k';
+                                return DropdownMenuItem(value: k, child: Row(children: [
+                                  const Icon(Icons.class_rounded, size: 18, color: Color(0xFF6366F1)),
+                                  const SizedBox(width: 12),
+                                  Text(display, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                                ]));
+                              }),
                             ],
                             onChanged: (v) {
                               setState(() => _selectedKelas = v);

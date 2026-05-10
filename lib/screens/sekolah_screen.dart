@@ -54,6 +54,7 @@ class _SekolahScreenState extends State<SekolahScreen> {
               TextField(controller: alamatC, decoration: const InputDecoration(labelText: 'Alamat', border: OutlineInputBorder()), textCapitalization: TextCapitalization.words),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
+                isExpanded: true,
                 initialValue: tingkat,
                 decoration: const InputDecoration(labelText: 'Tingkat', border: OutlineInputBorder()),
                 items: const [

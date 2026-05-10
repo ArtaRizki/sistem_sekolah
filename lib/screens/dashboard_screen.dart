@@ -157,6 +157,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   'Nama Guru',
                   const Color(0xFF6366F1),
                 ),
+/*
                 _buildInfoCard(
                   context,
                   Icons.email_rounded,
@@ -164,6 +165,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   'Email',
                   const Color(0xFF06B6D4),
                 ),
+*/
 
                 const SizedBox(height: 24),
 

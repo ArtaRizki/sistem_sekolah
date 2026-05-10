@@ -25,9 +25,9 @@ function getSheet(name) {
     }
     if (name === "Siswa") sheet.appendRow(["Nama", "NIS", "JK", "Kelas", "Sekolah"]);
     if (name === "Mapel") {
-      sheet.appendRow(["Nama", "Kode"]);
-      sheet.appendRow(["PJOK", "PJOK"]);
-      sheet.appendRow(["TIK", "TIK"]);
+      sheet.appendRow(["Nama", "Kode", "Sekolah"]);
+      sheet.appendRow(["PJOK", "PJOK", "Semua"]);
+      sheet.appendRow(["TIK", "TIK", "Semua"]);
     }
     if (name === "Sekolah") {
       sheet.appendRow(["Nama", "Alamat", "Tingkat"]);
@@ -35,7 +35,7 @@ function getSheet(name) {
       sheet.appendRow(["MA Al-Ma'arif 2 Plered", "Plered, Purwakarta", "MA"]);
       sheet.appendRow(["MAU Al-Azhar 1 Purwakarta", "Purwakarta, Jawa Barat", "MA"]);
     }
-    if (name === "Nilai") sheet.appendRow(["Nama", "NIS", "Mapel", "Nilai", "Sekolah"]);
+    if (name === "Nilai") sheet.appendRow(["Nama", "NIS", "Mapel", "Nilai", "Sekolah", "Tanggal"]);
     if (name === "Wajah") sheet.appendRow(["ID", "Embedding", "CreatedAt"]);
     if (name === "Absensi") sheet.appendRow(["Tanggal", "Nama", "Status", "Similarity", "Device_Timestamp", "Sekolah"]);
   } else {
@@ -48,7 +48,7 @@ function getSheet(name) {
     }
     
     // 2. Check for 'Sekolah' in relational sheets
-    var needsSekolah = ["Guru", "Siswa", "Nilai", "Absensi"];
+    var needsSekolah = ["Guru", "Siswa", "Mapel", "Nilai", "Absensi"];
     if (needsSekolah.indexOf(name) !== -1 && headers.indexOf("Sekolah") === -1) {
       var newCol = sheet.getLastColumn() + 1;
       sheet.getRange(1, newCol).setValue("Sekolah");
@@ -58,6 +58,18 @@ function getSheet(name) {
         var emptyVals = [];
         for (var r = 0; r < lastRow - 1; r++) emptyVals.push([""]);
         sheet.getRange(2, newCol, lastRow - 1, 1).setValues(emptyVals);
+      }
+    }
+    
+    // 3. Check for 'Tanggal' in Nilai sheet
+    if (name === "Nilai" && headers.indexOf("Tanggal") === -1) {
+      var tglCol = sheet.getLastColumn() + 1;
+      sheet.getRange(1, tglCol).setValue("Tanggal");
+      var lastRowTgl = sheet.getLastRow();
+      if (lastRowTgl > 1) {
+        var emptyTgl = [];
+        for (var r = 0; r < lastRowTgl - 1; r++) emptyTgl.push([""]);
+        sheet.getRange(2, tglCol, lastRowTgl - 1, 1).setValues(emptyTgl);
       }
     }
   }
@@ -78,7 +90,7 @@ function doGet(e) {
     else if (action === "getSiswa") result = getSiswaData(e.parameter.kelas, sekolah);
     else if (action === "getMapel") result = getMapelData();
     else if (action === "getSekolah") result = getSekolahData();
-    else if (action === "getNilai") result = getNilaiData(e.parameter.mapel, sekolah);
+    else if (action === "getNilai") result = getNilaiData(e.parameter.mapel, sekolah, e.parameter.tanggal || "");
     else if (action === "getRekap") result = getRekapData(e.parameter.bulan, sekolah);
     else if (action === "getRegisteredFace") result = getRegisteredFaceData(e.parameter.id);
     else if (action === "getKelas") result = getKelasData(sekolah);
@@ -102,7 +114,7 @@ function doGet(e) {
 function doPost(e) {
   var data = JSON.parse(e.postData.contents);
   var action = data.action;
-  var result = { status: "error", message: "Action not found" };
+  var result = { status: "error", message: "Action not found: " + String(action) };
 
   try {
     // ---- GURU CRUD (with Sekolah) ----
@@ -157,14 +169,35 @@ function doPost(e) {
       result = deleteRow("Sekolah", data.nama);
     }
 
-    // ---- NILAI CRUD (with Sekolah) ----
+    // ---- NILAI CRUD (with Sekolah + Tanggal) ----
     else if (action === "addNilai") {
       var sheet = getSheet("Nilai");
-      sheet.appendRow([data.nama, data.nis, data.mapel, data.nilai, data.sekolah]);
-      result = { status: "success", message: "Nilai ditambahkan" };
+      var tanggal = data.tanggal || "";
+      // Check for duplicate: same NIS + Mapel + Tanggal + Sekolah
+      if (tanggal) {
+        var existing = sheet.getDataRange().getValues();
+        for (var d = 1; d < existing.length; d++) {
+          if (existing[d][1].toString() === data.nis.toString() &&
+              existing[d][2].toString() === data.mapel &&
+              existing[d][5].toString() === tanggal &&
+              existing[d][4].toString() === data.sekolah) {
+            result = { status: "error", message: "Nilai untuk siswa ini pada tanggal dan mapel tersebut sudah ada" };
+            break;
+          }
+        }
+        if (result.status === "error") {
+          // Already set error above, skip append
+        } else {
+          sheet.appendRow([data.nama, data.nis, data.mapel, data.nilai, data.sekolah, tanggal]);
+          result = { status: "success", message: "Nilai ditambahkan" };
+        }
+      } else {
+        sheet.appendRow([data.nama, data.nis, data.mapel, data.nilai, data.sekolah, tanggal]);
+        result = { status: "success", message: "Nilai ditambahkan" };
+      }
     }
     else if (action === "updateNilai") {
-      result = updateRowByKey("Nilai", data.rowKey, [data.nama, data.nis, data.mapel, data.nilai, data.sekolah]);
+      result = updateRowByKey("Nilai", data.rowKey, [data.nama, data.nis, data.mapel, data.nilai, data.sekolah, data.tanggal || ""]);
     }
     else if (action === "deleteNilai") {
       result = deleteRowByKey("Nilai", data.rowKey);
@@ -191,15 +224,95 @@ function doPost(e) {
     }
     else if (action === "submitAttendance") {
       var sheet = getSheet("Absensi");
-      sheet.appendRow([
-        new Date().toISOString(),
-        data.nama || "Unknown",
-        data.status || "Hadir",
-        data.similarity || 0,
-        data.timestamp || "",
-        data.sekolah || ""
-      ]);
-      result = { status: "success", message: "Attendance recorded" };
+      var nama = data.nama || "Unknown";
+      var today = new Date();
+      var todayStr = today.getFullYear() + "-" + 
+        ("0" + (today.getMonth() + 1)).slice(-2) + "-" + 
+        ("0" + today.getDate()).slice(-2);
+      
+      // Check if this student already has attendance today
+      var existing = sheet.getDataRange().getValues();
+      var alreadyAbsen = false;
+      for (var d = 1; d < existing.length; d++) {
+        var rowDate = "";
+        try {
+          var dt = new Date(existing[d][0]);
+          rowDate = dt.getFullYear() + "-" + 
+            ("0" + (dt.getMonth() + 1)).slice(-2) + "-" + 
+            ("0" + dt.getDate()).slice(-2);
+        } catch(e) {
+          rowDate = existing[d][0].toString().substring(0, 10);
+        }
+        if (existing[d][1].toString() === nama && rowDate === todayStr) {
+          alreadyAbsen = true;
+          break;
+        }
+      }
+      
+      if (alreadyAbsen) {
+        result = { status: "duplicate", message: nama + " sudah absen hari ini" };
+      } else {
+        sheet.appendRow([
+          today.toISOString(),
+          nama,
+          data.status || "Hadir",
+          data.similarity || 0,
+          data.timestamp || "",
+          data.sekolah || ""
+        ]);
+        result = { status: "success", message: "Attendance recorded" };
+      }
+    }
+    else if (action === "addManualAbsensi") {
+      var sheet = getSheet("Absensi");
+      var nama = data.nama || "";
+      var statusAbsen = data.status || "Hadir";
+      var sekolahAbsen = data.sekolah || "";
+      var tanggalInput = data.tanggal || "";
+      
+      // Parse the date or use today
+      var targetDate;
+      if (tanggalInput) {
+        targetDate = new Date(tanggalInput);
+      } else {
+        targetDate = new Date();
+      }
+      var targetDateStr = targetDate.getFullYear() + "-" + 
+        ("0" + (targetDate.getMonth() + 1)).slice(-2) + "-" + 
+        ("0" + targetDate.getDate()).slice(-2);
+      
+      // Check duplicate: same name + same date
+      var existing = sheet.getDataRange().getValues();
+      var alreadyAbsen = false;
+      for (var d = 1; d < existing.length; d++) {
+        var rowDate = "";
+        try {
+          var dt = new Date(existing[d][0]);
+          rowDate = dt.getFullYear() + "-" + 
+            ("0" + (dt.getMonth() + 1)).slice(-2) + "-" + 
+            ("0" + dt.getDate()).slice(-2);
+        } catch(e) {
+          rowDate = existing[d][0].toString().substring(0, 10);
+        }
+        if (existing[d][1].toString() === nama && rowDate === targetDateStr) {
+          alreadyAbsen = true;
+          break;
+        }
+      }
+      
+      if (alreadyAbsen) {
+        result = { status: "duplicate", message: nama + " sudah tercatat absen pada tanggal " + targetDateStr };
+      } else {
+        sheet.appendRow([
+          targetDate.toISOString(),
+          nama,
+          statusAbsen,
+          0,
+          "",
+          sekolahAbsen
+        ]);
+        result = { status: "success", message: "Absensi " + statusAbsen + " untuk " + nama + " berhasil dicatat" };
+      }
     }
   } catch (err) {
     result = { status: "error", message: err.toString() };
@@ -374,7 +487,11 @@ function getMapelData() {
   var data = [];
   for (var i = 1; i < values.length; i++) {
     if (values[i][0]) {
-      data.push({ nama: values[i][0], kode: values[i][1] });
+      data.push({ 
+        nama: values[i][0], 
+        kode: values[i][1],
+        sekolah: values[i][2] || "Semua"
+      });
     }
   }
   return data;
@@ -407,21 +524,23 @@ function getKelasData(sekolah) {
   return Object.keys(kelasSet);
 }
 
-function getNilaiData(mapel, sekolah) {
+function getNilaiData(mapel, sekolah, tanggal) {
   var sheet = getSheet("Nilai");
   var values = sheet.getDataRange().getValues();
   var data = [];
   for (var i = 1; i < values.length; i++) {
     if (!values[i][0]) continue;
-    // Col 4 = Sekolah
+    // Col 4 = Sekolah, Col 5 = Tanggal
     if (sekolah && values[i][4].toString() !== sekolah) continue;
     if (mapel && values[i][2].toString() !== mapel) continue;
+    if (tanggal && values[i][5].toString() !== tanggal) continue;
     data.push({
       nama: values[i][0],
       nis: values[i][1].toString(),
       mapel: values[i][2],
       nilai: values[i][3],
       sekolah: values[i][4],
+      tanggal: values[i][5] ? values[i][5].toString() : "",
       rowKey: values[i].map(function(c) { return c.toString(); }).join("|")
     });
   }
@@ -433,14 +552,27 @@ function getRekapData(bulan, sekolah) {
   var values = sheet.getDataRange().getValues();
   var rekap = {};
   
+  var bulanNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni",
+                    "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+  
   for (var i = 1; i < values.length; i++) {
-    var tanggal = values[i][0].toString();
+    var tanggalRaw = values[i][0];
     var nama = values[i][1];
     var status = values[i][2];
     var absenSekolah = values[i][5] || "";
     
     if (sekolah && absenSekolah.toString() !== sekolah) continue;
-    if (bulan && tanggal.indexOf(bulan) === -1) continue;
+    
+    // Parse the date and convert to "Mei 2026" format for comparison
+    if (bulan) {
+      try {
+        var dt = new Date(tanggalRaw);
+        var bulanTahun = bulanNames[dt.getMonth()] + " " + dt.getFullYear();
+        if (bulanTahun !== bulan) continue;
+      } catch(e) {
+        continue;
+      }
+    }
     
     if (!rekap[nama]) rekap[nama] = { nama: nama, hadir: 0, izin: 0, sakit: 0, alpa: 0, total: 0, sekolah: absenSekolah };
     rekap[nama].total++;

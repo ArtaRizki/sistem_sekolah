@@ -60,8 +60,8 @@ class FaceService {
     await _apiService.registerFace(embedding, id: userId);
   }
 
-  Future<void> syncAttendance(List<double> embedding, double similarity, {String? name, String? sekolah}) async {
-    await _apiService.submitAttendance(embedding, similarity, name: name, sekolah: sekolah);
+  Future<Map<String, dynamic>> syncAttendance(List<double> embedding, double similarity, {String? name, String? sekolah}) async {
+    return await _apiService.submitAttendance(embedding, similarity, name: name, sekolah: sekolah);
   }
 
   Future<List<double>?> getRegisteredFace() async {
