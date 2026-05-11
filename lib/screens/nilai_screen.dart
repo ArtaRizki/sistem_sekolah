@@ -55,24 +55,30 @@ class _NilaiScreenState extends State<NilaiScreen> {
   Future<void> _loadMapelAndNilai() async {
     setState(() => _isLoading = true);
     try {
-      final mapelData = await _apiService.getMapel();
-      final sekolahData = await _apiService.getSekolah();
-      // Fetch ALL siswa (no sekolah filter) so dialog can pick from any school
-      final siswaData = await _apiService.getSiswa();
+      final results = await Future.wait([
+        _apiService.getMapel(),
+        _apiService.getSekolah(),
+        _apiService.getSiswa(), // ALL siswa for dialog
+        _apiService.getNilai(
+          _selectedMapel,
+          sekolah: widget.sekolah,
+          tanggal: _selectedTanggal,
+          kelas: (_selectedKelas != 'Semua Kelas') ? _selectedKelas : null,
+        ),
+      ]);
+
+      final mapelData = results[0];
+      final sekolahData = results[1];
+      final siswaData = results[2];
+      final data = results[3];
+
       if (mapelData.isNotEmpty) {
         _mapelList = mapelData.map<String>((e) => e['nama'].toString()).toList();
         if (!_mapelList.contains(_selectedMapel) && _mapelList.isNotEmpty) {
           _selectedMapel = _mapelList.first;
         }
       }
-      final kelasFilter =
-          (_selectedKelas != 'Semua Kelas') ? _selectedKelas : null;
-      final data = await _apiService.getNilai(
-        _selectedMapel,
-        sekolah: widget.sekolah,
-        tanggal: _selectedTanggal,
-        kelas: kelasFilter,
-      );
+
       setState(() {
         _nilaiData = data;
         _sekolahList = sekolahData;

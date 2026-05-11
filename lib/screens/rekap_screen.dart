@@ -32,42 +32,39 @@ class _RekapScreenState extends State<RekapScreen> {
   @override
   void initState() {
     super.initState();
-    _loadKelas();
-    _loadRekap();
+    _loadData();
   }
 
   @override
   void didUpdateWidget(covariant RekapScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.sekolah != widget.sekolah) {
-      _loadKelas();
-      _loadRekap();
+      _loadData();
     }
   }
 
-  Future<void> _loadKelas() async {
-    try {
-      final kelasData = await _apiService.getKelas(sekolah: widget.sekolah);
-      setState(() {
-        _kelasList = ['Semua Kelas', ...kelasData.map((e) => e.toString())];
-        _selectedKelas = 'Semua Kelas';
-      });
-    } catch (e) {
-      debugPrint("Error loading kelas: $e");
-    }
-  }
-
-  Future<void> _loadRekap() async {
+  Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
       final kelasFilter = (_selectedKelas != null && _selectedKelas != 'Semua Kelas') ? _selectedKelas : null;
-      final data = await _apiService.getRekap(_selectedBulan, sekolah: widget.sekolah, kelas: kelasFilter);
+      final results = await Future.wait([
+        _apiService.getKelas(sekolah: widget.sekolah),
+        _apiService.getRekap(_selectedBulan, sekolah: widget.sekolah, kelas: kelasFilter),
+      ]);
+
+      final kelasData = results[0];
+      final rekapData = results[1];
+
       setState(() {
-        _rekapData = data;
+        _kelasList = ['Semua Kelas', ...kelasData.map((e) => e.toString())];
+        if (_selectedKelas == null || !_kelasList.contains(_selectedKelas)) {
+          _selectedKelas = 'Semua Kelas';
+        }
+        _rekapData = rekapData;
         _isLoading = false;
       });
     } catch (e) {
-      debugPrint("Error loading rekap: $e");
+      debugPrint("Error loading rekap data: $e");
       setState(() => _isLoading = false);
     }
   }
@@ -248,7 +245,7 @@ class _RekapScreenState extends State<RekapScreen> {
                               onChanged: (String? newValue) {
                                 if (newValue != null) {
                                   setState(() => _selectedBulan = newValue);
-                                  _loadRekap();
+                                  _loadData();
                                 }
                               },
                             ),
@@ -297,7 +294,7 @@ class _RekapScreenState extends State<RekapScreen> {
                               onChanged: (String? newValue) {
                                 if (newValue != null) {
                                   setState(() => _selectedKelas = newValue);
-                                  _loadRekap();
+                                  _loadData();
                                 }
                               },
                             ),
@@ -312,7 +309,7 @@ class _RekapScreenState extends State<RekapScreen> {
           ),
           Expanded(
             child: RefreshIndicator(
-              onRefresh: _loadRekap,
+              onRefresh: _loadData,
               child: _isLoading 
                 ? const Center(child: CircularProgressIndicator())
                 : _rekapData.isEmpty 

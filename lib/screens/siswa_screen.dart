@@ -35,16 +35,19 @@ class _SiswaScreenState extends State<SiswaScreen> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
-      final kelasList = await _apiService.getKelas(sekolah: widget.sekolah);
-      final siswaList = await _apiService.getSiswa(
-        kelas: _selectedKelas,
-        sekolah: widget.sekolah,
-      );
-      final sekolahList = await _apiService.getSekolah();
+      final results = await Future.wait([
+        _apiService.getKelas(sekolah: widget.sekolah),
+        _apiService.getSiswa(
+          kelas: _selectedKelas,
+          sekolah: widget.sekolah,
+        ),
+        _apiService.getSekolah(),
+      ]);
+
       setState(() {
-        _kelasList = kelasList.map<String>((e) => e.toString()).toList();
-        _siswaList = siswaList;
-        _sekolahList = sekolahList;
+        _kelasList = results[0].map<String>((e) => e.toString()).toList();
+        _siswaList = results[1];
+        _sekolahList = results[2];
         _isLoading = false;
       });
     } catch (e) {

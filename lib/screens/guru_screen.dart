@@ -33,11 +33,13 @@ class _GuruScreenState extends State<GuruScreen> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
-      final data = await _apiService.getGuru(sekolah: widget.sekolah);
-      final sekolah = await _apiService.getSekolah();
+      final results = await Future.wait([
+        _apiService.getGuru(sekolah: widget.sekolah),
+        _apiService.getSekolah(),
+      ]);
       setState(() {
-        guruList = data;
-        _sekolahList = sekolah;
+        guruList = results[0];
+        _sekolahList = results[1];
         _isLoading = false;
       });
     } catch (e) {
