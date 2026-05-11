@@ -77,10 +77,10 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
       _isProcessing = true;
       _status = "Mengambil data siswa...";
     });
-    
+
     // Show student picker first
     final List<dynamic> siswaList = await _apiService.getSiswa();
-    
+
     setState(() {
       _isProcessing = false;
       _status = "Siap";
@@ -106,7 +106,8 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
                 subtitle: Text(
                   "NIS: ${siswaList[i]['nis']} • ${siswaList[i]['kelas']}",
                 ),
-                onTap: () => Navigator.pop(ctx, siswaList[i] as Map<String, dynamic>),
+                onTap: () =>
+                    Navigator.pop(ctx, siswaList[i] as Map<String, dynamic>),
               ),
             ),
           ),
@@ -384,7 +385,9 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
       return;
     }
 
-    String sekolah = sekolahList.isNotEmpty ? sekolahList.first['nama'] ?? '' : '';
+    String sekolah = sekolahList.isNotEmpty
+        ? sekolahList.first['nama'] ?? ''
+        : '';
     String? selectedNis;
     String selectedNama = '';
     String selectedStatus = 'Izin';
@@ -431,7 +434,10 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
                         decoration: const InputDecoration(
                           labelText: 'Tanggal',
                           border: OutlineInputBorder(),
-                          suffixIcon: Icon(Icons.calendar_today_rounded, size: 20),
+                          suffixIcon: Icon(
+                            Icons.calendar_today_rounded,
+                            size: 20,
+                          ),
                         ),
                         child: Text(tanggal),
                       ),
@@ -442,7 +448,10 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
                       decoration: const InputDecoration(
                         labelText: 'Sekolah',
                         border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
@@ -453,7 +462,10 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
                               .map<DropdownMenuItem<String>>(
                                 (s) => DropdownMenuItem(
                                   value: s['nama'],
-                                  child: Text(s['nama'], overflow: TextOverflow.ellipsis),
+                                  child: Text(
+                                    s['nama'],
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
                               )
                               .toList(),
@@ -472,7 +484,10 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
                       decoration: const InputDecoration(
                         labelText: 'Siswa',
                         border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
@@ -509,18 +524,31 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
                       decoration: const InputDecoration(
                         labelText: 'Status Kehadiran',
                         border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
                           isExpanded: true,
                           value: selectedStatus,
                           items: const [
-                            DropdownMenuItem(value: 'Izin', child: Text('Izin')),
-                            DropdownMenuItem(value: 'Sakit', child: Text('Sakit')),
-                            DropdownMenuItem(value: 'Alpa', child: Text('Alpa')),
+                            DropdownMenuItem(
+                              value: 'Izin',
+                              child: Text('Izin'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Sakit',
+                              child: Text('Sakit'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Alpa',
+                              child: Text('Alpa'),
+                            ),
                           ],
-                          onChanged: (v) => setDialogState(() => selectedStatus = v!),
+                          onChanged: (v) =>
+                              setDialogState(() => selectedStatus = v!),
                         ),
                       ),
                     ),
@@ -603,25 +631,35 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
                   child: Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: (_initError != null ? Colors.red : const Color(0xFF6366F1)).withValues(alpha: 0.1),
+                      color:
+                          (_initError != null
+                                  ? Colors.red
+                                  : const Color(0xFF6366F1))
+                              .withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Icon(
-                      _initError != null ? Icons.error_outline_rounded : Icons.face_rounded,
+                      _initError != null
+                          ? Icons.error_outline_rounded
+                          : Icons.face_rounded,
                       size: 60,
-                      color: _initError != null ? Colors.red : const Color(0xFF6366F1),
+                      color: _initError != null
+                          ? Colors.red
+                          : const Color(0xFF6366F1),
                     ),
                   ),
                 ),
                 const SizedBox(height: 32),
-                if (_initError == null) 
+                if (_initError == null)
                   const CircularProgressIndicator(color: Color(0xFF6366F1)),
                 const SizedBox(height: 24),
                 Text(
                   _initError ?? "Menginisialisasi Model Wajah...",
                   style: TextStyle(
                     fontSize: 14,
-                    color: _initError != null ? Colors.red : const Color(0xFF1F2937),
+                    color: _initError != null
+                        ? Colors.red
+                        : const Color(0xFF1F2937),
                     fontWeight: FontWeight.w500,
                   ),
                   textAlign: TextAlign.center,
@@ -689,7 +727,7 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(20),
                     child: Image.asset(
-                      'assets/drp_absensi_logo.jpeg',
+                      'assets/drp_banner.png',
                       width: 120,
                       height: 120,
                       fit: BoxFit.cover,
