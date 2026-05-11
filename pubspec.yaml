@@ -68,6 +68,7 @@ flutter:
   assets:
     - assets/drp_absensi_logo.jpeg
     - assets/drp_banner.png
+    - assets/vggface2.tflite
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

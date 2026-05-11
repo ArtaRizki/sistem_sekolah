@@ -5,7 +5,6 @@ import 'dart:developer' as d;
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
 import 'api_service.dart';
 
 class FaceService {
@@ -46,18 +45,20 @@ class FaceService {
   }
 
   Future<void> _downloadModel(File file) async {
-    final response = await http.get(
-      Uri.parse('https://janissari.id/modelling/vggface2.tflite'),
-    );
-
-    if (response.statusCode != 200) {
-      throw Exception("Gagal mengunduh file model: ${response.statusCode}");
+    try {
+      final byteData = await rootBundle.load('assets/vggface2.tflite');
+      final buffer = byteData.buffer;
+      
+      if (!file.parent.existsSync()) {
+        file.parent.createSync(recursive: true);
+      }
+      
+      await file.writeAsBytes(
+        buffer.asUint8List(byteData.offsetInBytes, byteData.lengthInBytes),
+      );
+    } catch (e) {
+      throw Exception("Gagal menyalin model dari assets: $e");
     }
-
-    if (!file.parent.existsSync()) {
-      file.parent.createSync(recursive: true);
-    }
-    await file.writeAsBytes(response.bodyBytes);
   }
 
   Future<String?> captureFace() async {
@@ -89,6 +90,10 @@ class FaceService {
   }
 
   double calculateSimilarity(List<double> v1, List<double> v2) {
+    if (v1.length != v2.length) {
+      d.log('Embedding lengths do not match: ${v1.length} vs ${v2.length}');
+      return 0.0;
+    }
     double dotProduct = 0.0;
     double normA = 0.0;
     double normB = 0.0;

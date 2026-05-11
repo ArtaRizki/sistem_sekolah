@@ -372,8 +372,12 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
       _status = "Mengambil data sekolah dan siswa...";
     });
 
-    final siswaList = await _apiService.getSiswa();
-    final sekolahList = await _apiService.getSekolah();
+    final results = await Future.wait([
+      _apiService.getSiswa(),
+      _apiService.getSekolah(),
+    ]);
+    final siswaList = results[0];
+    final sekolahList = results[1];
 
     setState(() {
       _isProcessing = false;

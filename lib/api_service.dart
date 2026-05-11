@@ -24,9 +24,44 @@ class ApiService {
   }
 
   // ==========================================
+  // CACHE SYSTEM
+  // ==========================================
+  static final Map<String, dynamic> _cache = {};
+  static final Map<String, DateTime> _cacheTime = {};
+  static const Duration _cacheDuration = Duration(minutes: 5);
+
+  void clearCache() {
+    _cache.clear();
+    _cacheTime.clear();
+    log('🧹 [CACHE] Cleared all cache');
+  }
+
+  Future<dynamic> _getCached(Uri url) async {
+    final key = url.toString();
+    if (_cache.containsKey(key)) {
+      final cacheAge = DateTime.now().difference(_cacheTime[key]!);
+      if (cacheAge < _cacheDuration) {
+        log('⚡ [CACHE HIT] $key');
+        return _cache[key];
+      }
+    }
+
+    final response = await http.get(url);
+    _log('GET', url, response: response);
+    final decoded = jsonDecode(response.body);
+
+    _cache[key] = decoded;
+    _cacheTime[key] = DateTime.now();
+    return decoded;
+  }
+
+  // ==========================================
   // GENERIC POST HELPER
   // ==========================================
   Future<Map<String, dynamic>> _postAction(Map<String, dynamic> body) async {
+    // Clear cache on any modification
+    clearCache();
+    
     final url = Uri.parse(baseUrl);
     final encoded = jsonEncode(body);
     try {
@@ -77,9 +112,8 @@ class ApiService {
     final s = sekolah != null ? '&sekolah=${Uri.encodeComponent(sekolah)}' : '';
     final url = Uri.parse('$baseUrl?action=getDashboard$s');
     try {
-      final response = await http.get(url);
-      _log('GET', url, response: response);
-      return jsonDecode(response.body);
+      final decoded = await _getCached(url);
+      return decoded is Map<String, dynamic> ? decoded : {};
     } catch (e) {
       _log('GET', url, error: e);
       return {'status': 'error', 'message': e.toString()};
@@ -90,9 +124,7 @@ class ApiService {
     final s = sekolah != null ? '&sekolah=${Uri.encodeComponent(sekolah)}' : '';
     final url = Uri.parse('$baseUrl?action=getGuru$s');
     try {
-      final response = await http.get(url);
-      _log('GET', url, response: response);
-      final decoded = jsonDecode(response.body);
+      final decoded = await _getCached(url);
       return decoded is List ? decoded : [];
     } catch (e) {
       _log('GET', url, error: e);
@@ -110,9 +142,7 @@ class ApiService {
     }
     final url = Uri.parse('$baseUrl?$params');
     try {
-      final response = await http.get(url);
-      _log('GET', url, response: response);
-      final decoded = jsonDecode(response.body);
+      final decoded = await _getCached(url);
       return decoded is List ? decoded : [];
     } catch (e) {
       _log('GET', url, error: e);
@@ -124,9 +154,7 @@ class ApiService {
     final s = sekolah != null ? '&sekolah=${Uri.encodeComponent(sekolah)}' : '';
     final url = Uri.parse('$baseUrl?action=getMapel$s');
     try {
-      final response = await http.get(url);
-      _log('GET', url, response: response);
-      final decoded = jsonDecode(response.body);
+      final decoded = await _getCached(url);
       return decoded is List ? decoded : [];
     } catch (e) {
       _log('GET', url, error: e);
@@ -137,9 +165,7 @@ class ApiService {
   Future<List<dynamic>> getSekolah() async {
     final url = Uri.parse('$baseUrl?action=getSekolah');
     try {
-      final response = await http.get(url);
-      _log('GET', url, response: response);
-      final decoded = jsonDecode(response.body);
+      final decoded = await _getCached(url);
       return decoded is List ? decoded : [];
     } catch (e) {
       _log('GET', url, error: e);
@@ -151,9 +177,7 @@ class ApiService {
     final s = sekolah != null ? '&sekolah=${Uri.encodeComponent(sekolah)}' : '';
     final url = Uri.parse('$baseUrl?action=getKelas$s');
     try {
-      final response = await http.get(url);
-      _log('GET', url, response: response);
-      final decoded = jsonDecode(response.body);
+      final decoded = await _getCached(url);
       return decoded is List ? decoded : [];
     } catch (e) {
       _log('GET', url, error: e);
@@ -165,9 +189,7 @@ class ApiService {
     final s = sekolah != null ? '&sekolah=${Uri.encodeComponent(sekolah)}' : '';
     final url = Uri.parse('$baseUrl?action=getSiswaWajah$s');
     try {
-      final response = await http.get(url);
-      _log('GET', url, response: response);
-      final decoded = jsonDecode(response.body);
+      final decoded = await _getCached(url);
       return decoded is List ? decoded : [];
     } catch (e) {
       _log('GET', url, error: e);
@@ -192,9 +214,7 @@ class ApiService {
       '$baseUrl?action=getNilai&mapel=${Uri.encodeComponent(mapel)}$s$t$k',
     );
     try {
-      final response = await http.get(url);
-      _log('GET', url, response: response);
-      final decoded = jsonDecode(response.body);
+      final decoded = await _getCached(url);
       return decoded is List ? decoded : [];
     } catch (e) {
       _log('GET', url, error: e);
@@ -215,9 +235,7 @@ class ApiService {
       '$baseUrl?action=getRekap&bulan=${Uri.encodeComponent(bulan)}$s$k',
     );
     try {
-      final response = await http.get(url);
-      _log('GET', url, response: response);
-      final decoded = jsonDecode(response.body);
+      final decoded = await _getCached(url);
       return decoded is List ? decoded : [];
     } catch (e) {
       _log('GET', url, error: e);
