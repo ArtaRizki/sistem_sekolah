@@ -50,6 +50,11 @@ class ApiService {
     _log('GET', url, response: response);
     final decoded = jsonDecode(response.body);
 
+    // Don't cache empty results to prevent sticky empty states
+    if (decoded is List && decoded.isEmpty) {
+      return decoded;
+    }
+
     _cache[key] = decoded;
     _cacheTime[key] = DateTime.now();
     return decoded;
@@ -59,9 +64,6 @@ class ApiService {
   // GENERIC POST HELPER
   // ==========================================
   Future<Map<String, dynamic>> _postAction(Map<String, dynamic> body) async {
-    // Clear cache on any modification
-    clearCache();
-    
     final url = Uri.parse(baseUrl);
     final encoded = jsonEncode(body);
     try {
@@ -84,6 +86,7 @@ class ApiService {
             requestBody: encoded,
             response: getResponse,
           );
+          clearCache(); // Clear cache AFTER operation finishes
           return jsonDecode(getResponse.body);
         }
       }
@@ -91,6 +94,8 @@ class ApiService {
       final response = await http.Response.fromStream(streamedResponse);
       _log('POST', url, requestBody: encoded, response: response);
       final decoded = jsonDecode(response.body);
+      clearCache(); // Clear cache AFTER operation finishes
+      
       if (decoded is Map<String, dynamic>) {
         return decoded;
       } else {
@@ -101,6 +106,7 @@ class ApiService {
       }
     } catch (e) {
       _log('POST', url, requestBody: encoded, error: e);
+      clearCache(); // Also clear on error just in case
       return {'status': 'error', 'message': 'Gagal terhubung ke server: $e'};
     }
   }
