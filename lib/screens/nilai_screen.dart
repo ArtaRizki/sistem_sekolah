@@ -120,23 +120,27 @@ class _NilaiScreenState extends State<NilaiScreen> {
 
       if (dt == null) return tanggal;
 
-      const hariList = [
+      const bulanList = [
         '',
-        'Senin',
-        'Selasa',
-        'Rabu',
-        'Kamis',
-        'Jumat',
-        'Sabtu',
-        'Minggu',
+        'Januari',
+        'Februari',
+        'Maret',
+        'April',
+        'Mei',
+        'Juni',
+        'Juli',
+        'Agustus',
+        'September',
+        'Oktober',
+        'November',
+        'Desember'
       ];
 
-      final hari = hariList[dt.weekday];
-      final tanggalNum = dt.day.toString().padLeft(2, '0');
-      final bulanNum = dt.month.toString().padLeft(2, '0');
+      final tanggalNum = dt.day;
+      final bulan = bulanList[dt.month];
       final tahun = dt.year;
 
-      return '$hari, $tanggalNum-$bulanNum-$tahun';
+      return '$tanggalNum $bulan $tahun';
     } catch (_) {
       return tanggal;
     }
@@ -631,7 +635,7 @@ class _NilaiScreenState extends State<NilaiScreen> {
             ),
             pw.SizedBox(height: 4),
             pw.Text(
-              'Tanggal: ${DateTime.now().toString().split(' ')[0]}',
+              'Tanggal: ${_formatTanggal(DateTime.now().toString())}',
               style: const pw.TextStyle(fontSize: 14),
             ),
             pw.SizedBox(height: 24),
@@ -649,7 +653,7 @@ class _NilaiScreenState extends State<NilaiScreen> {
                 final d = _nilaiData[i];
                 return [
                   '${i + 1}',
-                  d['tanggal'] ?? '-',
+                  _formatTanggal(d['tanggal']?.toString() ?? ''),
                   d['nama'] ?? '-',
                   d['mapel'] ?? '-',
                   '${d['nilai'] ?? 0}',
