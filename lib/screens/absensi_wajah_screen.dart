@@ -224,7 +224,7 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
               if (!_isTripodMode) {
                 _showSuccessDialog(
                   "Sudah Absen!",
-                  "$name sudah tercatat absen hari ini. Tidak perlu absen lagi.",
+                  "Siswa berikut sudah tercatat absen hari ini:\n\nNama: $name\nNIS: ${bestMatch['nis']}\nSekolah: $sekolah",
                   Icons.info_rounded,
                 );
               }
@@ -242,7 +242,7 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
               if (!_isTripodMode) {
                 _showSuccessDialog(
                   "Absensi Berhasil!",
-                  "Kehadiran $name telah tercatat.",
+                  "Kehadiran telah tercatat:\n\nNama: $name\nNIS: ${bestMatch['nis']}\nSekolah: $sekolah",
                   Icons.face_rounded,
                 );
               }
@@ -713,156 +713,161 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
         children: [
           Center(
             child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 500),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(32),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF6366F1).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: const Color(0xFF6366F1).withValues(alpha: 0.2),
-                      width: 2,
-                    ),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: Image.asset(
-                      'assets/drp_banner.png',
-                      width: 120,
-                      height: 120,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 32),
-                Text(
-                  "Absensi Wajah",
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1F2937),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  "Gunakan teknologi pengenalan wajah untuk absensi yang lebih cepat dan aman",
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF1F2937),
-                    fontWeight: FontWeight.w300,
-                    height: 1.5,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 48),
-                _buildMenuButton(
-                  onPressed: _isProcessing ? null : _registerFace,
-                  icon: Icons.person_add_rounded,
-                  label: "Daftar Wajah Siswa",
-                  color: const Color(0xFF6366F1),
-                  subtitle: "Simpan wajah siswa ke database",
-                ),
-                const SizedBox(height: 16),
-                _buildMenuButton(
-                  onPressed: _isProcessing ? null : _verifyAttendance,
-                  icon: Icons.camera_front_rounded,
-                  label: "Mulai Absensi",
-                  color: const Color(0xFF06B6D4),
-                  subtitle: _isTripodMode
-                      ? "Mode Tripod Aktif (Otomatis)"
-                      : "Verifikasi kehadiran siswa",
-                ),
-                const SizedBox(height: 24),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: Colors.grey[200]!),
-                  ),
-                  child: SwitchListTile(
-                    title: const Text(
-                      "Mode Tripod",
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
+              padding: const EdgeInsets.all(24),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 500),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(32),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF6366F1).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(
+                          color: const Color(0xFF6366F1).withValues(alpha: 0.2),
+                          width: 2,
+                        ),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: Image.asset(
+                          'assets/drp_banner.png',
+                          width: 120,
+                          height: 120,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
-                    subtitle: const Text(
-                      "Kamera akan terus menyala untuk absensi otomatis",
+                    const SizedBox(height: 32),
+                    Text(
+                      "Absensi Wajah",
+                      style: Theme.of(context).textTheme.headlineMedium
+                          ?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF1F2937),
+                          ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      "Gunakan teknologi pengenalan wajah untuk absensi yang lebih cepat dan aman",
                       style: TextStyle(
                         fontSize: 12,
+                        color: Color(0xFF1F2937),
                         fontWeight: FontWeight.w300,
-                      ),
-                    ),
-                    value: _isTripodMode,
-                    activeThumbColor: const Color(0xFF6366F1),
-                    activeTrackColor: const Color(
-                      0xFF6366F1,
-                    ).withValues(alpha: 0.3),
-                    onChanged: _isProcessing
-                        ? null
-                        : (v) => setState(() => _isTripodMode = v),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _buildMenuButton(
-                  onPressed: _isProcessing ? null : _showManualAbsensiDialog,
-                  icon: Icons.edit_note_rounded,
-                  label: "Input Manual",
-                  color: const Color(0xFFF59E0B),
-                  subtitle: "Input Izin, Sakit, atau Alpa",
-                ),
-                const SizedBox(height: 32),
-              ],
-            ),
-          ),
-        ),
-      ),
-      if (_isProcessing)
-        Positioned.fill(
-          child: Container(
-            color: Colors.white.withValues(alpha: 0.8),
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const CircularProgressIndicator(
-                    color: Color(0xFF6366F1),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF6366F1).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      _status,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontStyle: FontStyle.italic,
-                        color: Color(0xFF6366F1),
-                        fontWeight: FontWeight.w600,
+                        height: 1.5,
                       ),
                       textAlign: TextAlign.center,
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 48),
+                    _buildMenuButton(
+                      onPressed: _isProcessing ? null : _registerFace,
+                      icon: Icons.person_add_rounded,
+                      label: "Daftar Wajah Siswa",
+                      color: const Color(0xFF6366F1),
+                      subtitle: "Simpan wajah siswa ke database",
+                    ),
+                    const SizedBox(height: 16),
+                    _buildMenuButton(
+                      onPressed: _isProcessing ? null : _verifyAttendance,
+                      icon: Icons.camera_front_rounded,
+                      label: "Mulai Absensi",
+                      color: const Color(0xFF06B6D4),
+                      subtitle: _isTripodMode
+                          ? "Mode Tripod Aktif (Otomatis)"
+                          : "Verifikasi kehadiran siswa",
+                    ),
+                    const SizedBox(height: 24),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: Colors.grey[200]!),
+                      ),
+                      child: SwitchListTile(
+                        title: const Text(
+                          "Mode Tripod",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                          ),
+                        ),
+                        subtitle: const Text(
+                          "Kamera akan terus menyala untuk absensi otomatis",
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w300,
+                          ),
+                        ),
+                        value: _isTripodMode,
+                        activeThumbColor: const Color(0xFF6366F1),
+                        activeTrackColor: const Color(
+                          0xFF6366F1,
+                        ).withValues(alpha: 0.3),
+                        onChanged: _isProcessing
+                            ? null
+                            : (v) => setState(() => _isTripodMode = v),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildMenuButton(
+                      onPressed: _isProcessing
+                          ? null
+                          : _showManualAbsensiDialog,
+                      icon: Icons.edit_note_rounded,
+                      label: "Input Manual",
+                      color: const Color(0xFFF59E0B),
+                      subtitle: "Input Izin, Sakit, atau Alpa",
+                    ),
+                    const SizedBox(height: 32),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-      ],
+          if (_isProcessing)
+            Positioned.fill(
+              child: Container(
+                color: Colors.white.withValues(alpha: 0.8),
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const CircularProgressIndicator(color: Color(0xFF6366F1)),
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF6366F1).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          _status,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontStyle: FontStyle.italic,
+                            color: Color(0xFF6366F1),
+                            fontWeight: FontWeight.w600,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
