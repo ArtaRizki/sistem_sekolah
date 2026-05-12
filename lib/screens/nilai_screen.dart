@@ -172,7 +172,7 @@ class _NilaiScreenState extends State<NilaiScreen> {
   }
 
   void _showNilaiDialog({Map<String, dynamic>? nilai}) {
-    String? selectedNis = nilai?['nis']?.toString();
+    String? selectedId = nilai?['id']?.toString();
     String selectedNama = nilai?['nama']?.toString() ?? '';
     final nilaiC = TextEditingController(
       text: nilai?['nilai']?.toString() ?? '',
@@ -189,9 +189,9 @@ class _NilaiScreenState extends State<NilaiScreen> {
     }
 
     String selectedKelas = 'Semua';
-    if (isEdit && selectedNis != null) {
+    if (isEdit && selectedId != null) {
       for (var s in _siswaList) {
-        if (s['nis'].toString() == selectedNis &&
+        if (s['id'].toString() == selectedId &&
             s['kelas'] != null &&
             s['kelas'].toString().isNotEmpty) {
           selectedKelas = s['kelas'].toString();
@@ -352,7 +352,7 @@ class _NilaiScreenState extends State<NilaiScreen> {
                           onChanged: (v) => setDialogState(() {
                             sekolah = v!;
                             selectedKelas = 'Semua';
-                            selectedNis = null;
+                            selectedId = null;
                             selectedNama = '';
                           }),
                         ),
@@ -400,7 +400,7 @@ class _NilaiScreenState extends State<NilaiScreen> {
                           }).toList(),
                           onChanged: (v) => setDialogState(() {
                             selectedKelas = v!;
-                            selectedNis = null;
+                            selectedId = null;
                             selectedNama = '';
                           }),
                         ),
@@ -421,12 +421,12 @@ class _NilaiScreenState extends State<NilaiScreen> {
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
                           isExpanded: true,
-                          value: selectedNis,
+                          value: selectedId,
                           hint: const Text('Pilih Siswa'),
                           items: filteredSiswa
                               .map(
                                 (s) => DropdownMenuItem<String>(
-                                  value: s['nis'].toString(),
+                                  value: s['id'].toString(),
                                   child: Text(
                                     '${s['nama']} - ${s['kelas']}',
                                     overflow: TextOverflow.ellipsis,
@@ -435,10 +435,10 @@ class _NilaiScreenState extends State<NilaiScreen> {
                               )
                               .toList(),
                           onChanged: (v) => setDialogState(() {
-                            selectedNis = v;
+                            selectedId = v;
                             if (v != null) {
                               final match = filteredSiswa.firstWhere(
-                                (s) => s['nis'].toString() == v,
+                                (s) => s['id'].toString() == v,
                                 orElse: () => <String, dynamic>{},
                               );
                               selectedNama = match['nama'] ?? '';
@@ -498,7 +498,7 @@ class _NilaiScreenState extends State<NilaiScreen> {
               ),
               FilledButton(
                 onPressed: () async {
-                  if (selectedNis == null ||
+                  if (selectedId == null ||
                       selectedNama.isEmpty ||
                       nilaiC.text.isEmpty ||
                       sekolah.isEmpty ||
@@ -510,9 +510,9 @@ class _NilaiScreenState extends State<NilaiScreen> {
                   final n = num.tryParse(nilaiC.text) ?? 0;
                   // If 'Semua' is selected, use the student's actual school
                   String saveSekolah = sekolah;
-                  if (sekolah == 'Semua' && selectedNis != null) {
+                  if (sekolah == 'Semua' && selectedId != null) {
                     final siswa = _siswaList.firstWhere(
-                      (s) => s['nis'].toString() == selectedNis,
+                      (s) => s['id'].toString() == selectedId,
                       orElse: () => <String, dynamic>{},
                     );
                     saveSekolah = siswa['sekolah'] ?? '';
@@ -522,7 +522,7 @@ class _NilaiScreenState extends State<NilaiScreen> {
                     result = await _apiService.updateNilai(
                       nilai['rowKey'],
                       selectedNama,
-                      selectedNis!,
+                      selectedId!,
                       mapel,
                       n,
                       saveSekolah,
@@ -531,7 +531,7 @@ class _NilaiScreenState extends State<NilaiScreen> {
                   } else {
                     result = await _apiService.addNilai(
                       selectedNama,
-                      selectedNis!,
+                      selectedId!,
                       mapel,
                       n,
                       saveSekolah,
@@ -946,7 +946,7 @@ class _NilaiScreenState extends State<NilaiScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'NIS: ${data['nis']} • ${data['mapel']}',
+                                  '${data['mapel']}',
                                   style: const TextStyle(
                                     fontSize: 12,
                                     color: Color(0xFF1F2937),

@@ -288,14 +288,12 @@ class ApiService {
   // ==========================================
   Future<Map<String, dynamic>> addSiswa(
     String nama,
-    String nis,
     String jk,
     String kelas,
     String sekolah,
   ) => _postAction({
     'action': 'addSiswa',
     'nama': nama,
-    'nis': nis,
     'jk': jk,
     'kelas': kelas,
     'sekolah': sekolah,
@@ -304,7 +302,6 @@ class ApiService {
   Future<Map<String, dynamic>> updateSiswa(
     String rowKey,
     String nama,
-    String nis,
     String jk,
     String kelas,
     String sekolah,
@@ -312,7 +309,6 @@ class ApiService {
     'action': 'updateSiswa',
     'rowKey': rowKey,
     'nama': nama,
-    'nis': nis,
     'jk': jk,
     'kelas': kelas,
     'sekolah': sekolah,
@@ -386,7 +382,7 @@ class ApiService {
   // ==========================================
   Future<Map<String, dynamic>> addNilai(
     String nama,
-    String nis,
+    String id,
     String mapel,
     num nilai,
     String sekolah,
@@ -394,7 +390,7 @@ class ApiService {
   ) => _postAction({
     'action': 'addNilai',
     'nama': nama,
-    'nis': nis,
+    'id': id,
     'mapel': mapel,
     'nilai': nilai,
     'sekolah': sekolah,
@@ -404,7 +400,7 @@ class ApiService {
   Future<Map<String, dynamic>> updateNilai(
     String rowKey,
     String nama,
-    String nis,
+    String id,
     String mapel,
     num nilai,
     String sekolah,
@@ -413,7 +409,7 @@ class ApiService {
     'action': 'updateNilai',
     'rowKey': rowKey,
     'nama': nama,
-    'nis': nis,
+    'id': id,
     'mapel': mapel,
     'nilai': nilai,
     'sekolah': sekolah,

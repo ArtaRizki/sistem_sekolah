@@ -58,7 +58,6 @@ class _SiswaScreenState extends State<SiswaScreen> {
 
   void _showSiswaDialog({Map<String, dynamic>? siswa}) {
     final namaC = TextEditingController(text: siswa?['nama']?.toString() ?? '');
-    final nisC = TextEditingController(text: siswa?['nis']?.toString() ?? '');
     String selectedKelas = siswa?['kelas']?.toString() ?? '';
     String jk = siswa?['jk']?.toString() ?? 'L';
     String sekolah =
@@ -113,15 +112,6 @@ class _SiswaScreenState extends State<SiswaScreen> {
                       border: OutlineInputBorder(),
                     ),
                     textCapitalization: TextCapitalization.words,
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: nisC,
-                    decoration: const InputDecoration(
-                      labelText: 'NIS',
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.number,
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
@@ -207,7 +197,6 @@ class _SiswaScreenState extends State<SiswaScreen> {
               FilledButton(
                 onPressed: () async {
                   if (namaC.text.isEmpty ||
-                      nisC.text.isEmpty ||
                       selectedKelas.isEmpty ||
                       sekolah.isEmpty) {
                     return;
@@ -218,7 +207,6 @@ class _SiswaScreenState extends State<SiswaScreen> {
                     await _apiService.updateSiswa(
                       siswa['rowKey'],
                       namaC.text,
-                      nisC.text,
                       jk,
                       selectedKelas,
                       sekolah,
@@ -226,7 +214,6 @@ class _SiswaScreenState extends State<SiswaScreen> {
                   } else {
                     await _apiService.addSiswa(
                       namaC.text,
-                      nisC.text,
                       jk,
                       selectedKelas,
                       sekolah,
@@ -472,10 +459,10 @@ class _SiswaScreenState extends State<SiswaScreen> {
           children: [
             Row(
               children: [
-                Icon(Icons.badge_rounded, size: 14, color: Colors.grey[500]),
+                Icon(Icons.class_rounded, size: 14, color: Colors.grey[500]),
                 const SizedBox(width: 6),
                 Text(
-                  'NIS: ${siswa['nis']} • ${siswa['kelas']}',
+                  'Kelas ${siswa['kelas']}',
                   style: const TextStyle(
                     fontSize: 12,
                     color: Color(0xFF1F2937),

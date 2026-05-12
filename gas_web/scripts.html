@@ -68,7 +68,7 @@
 
   function loadSiswa() {
     const kelas = document.getElementById('select-kelas').value;
-    document.getElementById('siswa-table-body').innerHTML = '<tr><td colspan="4" class="text-center">Loading...</td></tr>';
+    document.getElementById('siswa-table-body').innerHTML = '<tr><td colspan="3" class="text-center">Loading...</td></tr>';
     
     google.script.run.withSuccessHandler(function(data) {
       let html = '';
@@ -77,11 +77,10 @@
         html += `<tr>
           <td>${i+1}</td>
           <td class="fw-bold">${s.nama}</td>
-          <td>${s.nis}</td>
           <td>${jkBadge}</td>
         </tr>`;
       });
-      document.getElementById('siswa-table-body').innerHTML = html || '<tr><td colspan="4" class="text-center">Tidak ada data</td></tr>';
+      document.getElementById('siswa-table-body').innerHTML = html || '<tr><td colspan="3" class="text-center">Tidak ada data</td></tr>';
     }).getSiswaData(kelas);
   }
 

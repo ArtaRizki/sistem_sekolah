@@ -23,7 +23,7 @@ function getSheet(name) {
       sheet.appendRow(["Dheri Rama Permadhi, S.Pd", "198706152010121001", "TIK", "MA Al-Ma'arif 2 Plered"]);
       sheet.appendRow(["Dheri Rama Permadhi, S.Pd", "198706152010121001", "PJOK", "MAU Al-Azhar 1 Purwakarta"]);
     }
-    if (name === "Siswa") sheet.appendRow(["Nama", "NIS", "JK", "Kelas", "Sekolah"]);
+    if (name === "Siswa") sheet.appendRow(["Nama", "ID", "JK", "Kelas", "Sekolah"]);
     if (name === "Mapel") {
       sheet.appendRow(["Nama", "Kode", "Sekolah"]);
       sheet.appendRow(["PJOK", "PJOK", "Semua"]);
@@ -35,7 +35,7 @@ function getSheet(name) {
       sheet.appendRow(["MA Al-Ma'arif 2 Plered", "Plered, Purwakarta", "MA"]);
       sheet.appendRow(["MAU Al-Azhar 1 Purwakarta", "Purwakarta, Jawa Barat", "MA"]);
     }
-    if (name === "Nilai") sheet.appendRow(["Nama", "NIS", "Mapel", "Nilai", "Sekolah", "Tanggal"]);
+    if (name === "Nilai") sheet.appendRow(["Nama", "ID", "Mapel", "Nilai", "Sekolah", "Tanggal"]);
     if (name === "Wajah") sheet.appendRow(["ID", "Embedding", "CreatedAt"]);
     if (name === "Absensi") sheet.appendRow(["Tanggal", "Nama", "Status", "Similarity", "Device_Timestamp", "Sekolah"]);
   } else {
@@ -133,36 +133,57 @@ function doPost(e) {
     // ---- SISWA CRUD (with Sekolah) ----
     else if (action === "addSiswa") {
       var sheet = getSheet("Siswa");
-      sheet.appendRow([data.nama, data.nis, data.jk, data.kelas, data.sekolah]);
+      // Auto-increment ID
+      var values = sheet.getDataRange().getValues();
+      var maxId = 0;
+      for (var i = 1; i < values.length; i++) {
+        var idVal = parseInt(values[i][1]) || 0;
+        if (idVal > maxId) maxId = idVal;
+      }
+      var newId = maxId + 1;
+      sheet.appendRow([data.nama, newId, data.jk, data.kelas, data.sekolah]);
       result = { status: "success", message: "Siswa ditambahkan" };
     }
     else if (action === "updateSiswa") {
-      result = updateRowByKey("Siswa", data.rowKey, [data.nama, data.nis, data.jk, data.kelas, data.sekolah]);
+      // Preserve existing ID when updating
+      var sheet = getSheet("Siswa");
+      var values = sheet.getDataRange().getValues();
+      var found = false;
+      for (var i = 1; i < values.length; i++) {
+        var key = values[i].map(function(c) { return c.toString(); }).join("|");
+        if (key === data.rowKey) {
+          var existingId = values[i][1]; // Preserve existing ID
+          sheet.getRange(i + 1, 1, 1, 5).setValues([[data.nama, existingId, data.jk, data.kelas, data.sekolah]]);
+          found = true;
+          break;
+        }
+      }
+      result = found ? { status: "success", message: "Siswa diperbarui" } : { status: "error", message: "Data tidak ditemukan" };
     }
     else if (action === "deleteSiswa") {
       var rowParts = data.rowKey.split("|");
       var namaSiswa = rowParts[0];
-      var nisSiswa = rowParts[1];
+      var idSiswa = rowParts[1];
       
       result = deleteRowByKey("Siswa", data.rowKey);
       
       if (result.status === "success") {
         // Cascade delete Wajah
-        if (nisSiswa) {
+        if (idSiswa) {
            var wSheet = getSheet("Wajah");
            var wValues = wSheet.getDataRange().getValues();
            for (var w = wValues.length - 1; w >= 1; w--) {
-             if (wValues[w][0].toString() === nisSiswa) {
+              if (wValues[w][0].toString() === idSiswa) {
                wSheet.deleteRow(w + 1);
              }
            }
            
-           // Cascade delete Nilai (NIS is col 2 / index 1)
-           var nSheet = getSheet("Nilai");
-           var nValues = nSheet.getDataRange().getValues();
-           for (var n = nValues.length - 1; n >= 1; n--) {
-             if (nValues[n][1].toString() === nisSiswa) {
-               nSheet.deleteRow(n + 1);
+           // Cascade delete Nilai (ID is col 2 / index 1)
+            var nSheet = getSheet("Nilai");
+            var nValues = nSheet.getDataRange().getValues();
+            for (var n = nValues.length - 1; n >= 1; n--) {
+              if (nValues[n][1].toString() === idSiswa) {
+                nSheet.deleteRow(n + 1);
              }
            }
         }
@@ -212,11 +233,11 @@ function doPost(e) {
       var tanggal = data.tanggal || "";
       result = { status: "processing" }; // Reset result to avoid "Action not found" check failure
       
-      // Check for duplicate: same NIS + Mapel + Tanggal + Sekolah
+      // Check for duplicate: same ID + Mapel + Tanggal + Sekolah
       if (tanggal) {
         var existing = sheet.getDataRange().getValues();
         for (var d = 1; d < existing.length; d++) {
-          var rowNis = existing[d][1].toString();
+          var rowId = existing[d][1].toString();
           var rowMapel = existing[d][2].toString();
           var rowSekolah = existing[d][4].toString();
           var rowTanggal = "";
@@ -233,7 +254,7 @@ function doPost(e) {
             }
           }
 
-          if (rowNis === data.nis.toString() &&
+          if (rowId === data.id.toString() &&
               rowMapel === data.mapel &&
               rowTanggal === tanggal &&
               rowSekolah === data.sekolah) {
@@ -245,16 +266,16 @@ function doPost(e) {
         if (result.status === "error") {
           // Already set duplicate error above, skip append
         } else {
-          sheet.appendRow([data.nama, data.nis, data.mapel, data.nilai, data.sekolah, tanggal]);
+          sheet.appendRow([data.nama, data.id, data.mapel, data.nilai, data.sekolah, tanggal]);
           result = { status: "success", message: "Nilai ditambahkan" };
         }
       } else {
-        sheet.appendRow([data.nama, data.nis, data.mapel, data.nilai, data.sekolah, tanggal]);
+        sheet.appendRow([data.nama, data.id, data.mapel, data.nilai, data.sekolah, tanggal]);
         result = { status: "success", message: "Nilai ditambahkan" };
       }
     }
     else if (action === "updateNilai") {
-      result = updateRowByKey("Nilai", data.rowKey, [data.nama, data.nis, data.mapel, data.nilai, data.sekolah, data.tanggal || ""]);
+      result = updateRowByKey("Nilai", data.rowKey, [data.nama, data.id, data.mapel, data.nilai, data.sekolah, data.tanggal || ""]);
     }
     else if (action === "deleteNilai") {
       result = deleteRowByKey("Nilai", data.rowKey);
@@ -263,9 +284,9 @@ function doPost(e) {
     // ---- FACE & ATTENDANCE ----
     else if (action === "registerFace") {
       var sheet = getSheet("Wajah");
-      var userId = data.id; // NIS
+      var userId = data.id;
       if (!userId) {
-         result = { status: "error", message: "ID (NIS) diperlukan" };
+         result = { status: "error", message: "ID diperlukan" };
       } else {
         var finder = sheet.createTextFinder(userId).matchEntireCell(true).findNext();
         var embeddingStr = JSON.stringify(data.embedding);
@@ -410,7 +431,7 @@ function deleteRow(sheetName, searchValue) {
 }
 
 /** 
- * Update by composite rowKey (e.g. "nama|sekolah" or "nis|mapel|sekolah")
+ * Update by composite rowKey (e.g. "nama|sekolah" or "id|mapel|sekolah")
  * The rowKey is matched against row values joined with "|"
  */
 function updateRowByKey(sheetName, rowKey, newValues) {
@@ -528,7 +549,7 @@ function getSiswaData(kelas, sekolah) {
     if (kelas && values[i][3].toString() !== kelas) continue;
     data.push({
       nama: values[i][0],
-      nis: values[i][1].toString(),
+      id: values[i][1].toString(),
       jk: values[i][2],
       kelas: values[i][3],
       sekolah: values[i][4],
@@ -606,7 +627,7 @@ function getNilaiData(mapel, sekolah, tanggal) {
 
     data.push({
       nama: values[i][0],
-      nis: values[i][1].toString(),
+      id: values[i][1].toString(),
       mapel: values[i][2],
       nilai: values[i][3],
       sekolah: values[i][4],
@@ -695,17 +716,17 @@ function getSiswaWajahData(sekolah) {
   
   var data = [];
   for (var i = 1; i < siswaValues.length; i++) {
-    var nis = siswaValues[i][1].toString();
-    if (!nis) continue;
+    var id = siswaValues[i][1].toString();
+    if (!id) continue;
     if (sekolah && siswaValues[i][4].toString() !== sekolah) continue;
     
-    if (wajahMap[nis]) {
+    if (wajahMap[id]) {
       data.push({
         nama: siswaValues[i][0],
-        nis: nis,
+        id: id,
         kelas: siswaValues[i][3],
         sekolah: siswaValues[i][4],
-        embedding: wajahMap[nis]
+        embedding: wajahMap[id]
       });
     }
   }

@@ -103,9 +103,7 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
               itemCount: siswaList.length,
               itemBuilder: (ctx, i) => ListTile(
                 title: Text(siswaList[i]['nama']),
-                subtitle: Text(
-                  "NIS: ${siswaList[i]['nis']} • ${siswaList[i]['kelas']}",
-                ),
+                subtitle: Text("${siswaList[i]['kelas']}"),
                 onTap: () =>
                     Navigator.pop(ctx, siswaList[i] as Map<String, dynamic>),
               ),
@@ -116,7 +114,7 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
     }
 
     if (selectedSiswa == null) return;
-    final String selectedNis = selectedSiswa['nis'].toString();
+    final String selectedId = selectedSiswa['id'].toString();
     final String selectedNama = selectedSiswa['nama'].toString();
 
     setState(() {
@@ -130,7 +128,7 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
         setState(() => _status = "Memproses Wajah...");
         final embedding = await _faceService.getEmbedding(path);
         if (embedding != null) {
-          await _faceService.saveRegisteredFace(embedding, userId: selectedNis);
+          await _faceService.saveRegisteredFace(embedding, userId: selectedId);
           await _loadRegisteredFaces();
           _showSuccessDialog(
             "Wajah Berhasil Didaftarkan!",
@@ -201,6 +199,7 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
           if (maxSimilarity > 0.75 && bestMatch != null) {
             final name = bestMatch['nama'];
             final sekolah = bestMatch['sekolah'];
+            final kelas = bestMatch['kelas'];
 
             final result = await _faceService.syncAttendance(
               embedding,
@@ -224,7 +223,7 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
               if (!_isTripodMode) {
                 _showSuccessDialog(
                   "Sudah Absen!",
-                  "Siswa berikut sudah tercatat absen hari ini:\n\nNama: $name\nNIS: ${bestMatch['nis']}\nSekolah: $sekolah",
+                  "Siswa berikut sudah tercatat absen hari ini:\n\nNama: $name\nKelas: $kelas\nSekolah: $sekolah",
                   Icons.info_rounded,
                 );
               }
@@ -242,7 +241,7 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
               if (!_isTripodMode) {
                 _showSuccessDialog(
                   "Absensi Berhasil!",
-                  "Kehadiran telah tercatat:\n\nNama: $name\nNIS: ${bestMatch['nis']}\nSekolah: $sekolah",
+                  "Kehadiran telah tercatat:\n\nNama: $name\nKelas: $kelas\nSekolah: $sekolah",
                   Icons.face_rounded,
                 );
               }
@@ -392,7 +391,7 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
     String sekolah = sekolahList.isNotEmpty
         ? sekolahList.first['nama'] ?? ''
         : '';
-    String? selectedNis;
+    String? selectedId;
     String selectedNama = '';
     String selectedStatus = 'Izin';
     String selectedSekolah = '';
@@ -475,7 +474,7 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
                               .toList(),
                           onChanged: (v) => setDialogState(() {
                             sekolah = v!;
-                            selectedNis = null;
+                            selectedId = null;
                             selectedNama = '';
                           }),
                         ),
@@ -496,12 +495,12 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
                           isExpanded: true,
-                          value: selectedNis,
+                          value: selectedId,
                           hint: const Text('Pilih Siswa'),
                           items: filteredSiswa
                               .map(
                                 (s) => DropdownMenuItem<String>(
-                                  value: s['nis'].toString(),
+                                  value: s['id'].toString(),
                                   child: Text(
                                     '${s['nama']} - ${s['kelas']}',
                                     overflow: TextOverflow.ellipsis,
@@ -511,10 +510,10 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
                               .toList(),
                           onChanged: (v) {
                             final siswa = filteredSiswa.firstWhere(
-                              (s) => s['nis'].toString() == v,
+                              (s) => s['id'].toString() == v,
                             );
                             setDialogState(() {
-                              selectedNis = v;
+                              selectedId = v;
                               selectedNama = siswa['nama'];
                               selectedSekolah = siswa['sekolah'] ?? sekolah;
                             });
