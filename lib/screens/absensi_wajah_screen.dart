@@ -182,6 +182,17 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
           Map<String, dynamic>? bestMatch;
           double maxSimilarity = 0.0;
 
+          // ================================================================
+          // THRESHOLD COSINE SIMILARITY = 0.82
+          // Dari benchmark internal model VGGFace2:
+          //   Wajah SAMA     : rata-rata 0.88–0.95
+          //   Wajah BERBEDA  : rata-rata 0.60–0.78
+          // Threshold 0.82 dipilih untuk menekan false-positive
+          // (wajah A dikenali sebagai siswa B).
+          // Jangan turunkan ke bawah 0.80 tanpa pengujian ulang.
+          // ================================================================
+          const double kSimilarityThreshold = 0.82;
+
           for (var reg in _registeredFaces) {
             final List<double> regEmbedding = (reg['embedding'] as List)
                 .map((e) => (e as num).toDouble())
@@ -190,13 +201,20 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
               regEmbedding,
               embedding,
             );
+            debugPrint(
+              '[FaceMatch] ${reg['nama']} → similarity: ${similarity.toStringAsFixed(4)}',
+            );
             if (similarity > maxSimilarity) {
               maxSimilarity = similarity;
               bestMatch = reg;
             }
           }
 
-          if (maxSimilarity > 0.75 && bestMatch != null) {
+          debugPrint(
+            '[FaceResult] Best: ${bestMatch?['nama']} | Score: ${maxSimilarity.toStringAsFixed(4)} | Threshold: $kSimilarityThreshold',
+          );
+
+          if (maxSimilarity > kSimilarityThreshold && bestMatch != null) {
             final name = bestMatch['nama'];
             final sekolah = bestMatch['sekolah'];
             final kelas = bestMatch['kelas'];
