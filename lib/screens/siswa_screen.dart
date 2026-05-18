@@ -44,9 +44,18 @@ class _SiswaScreenState extends State<SiswaScreen> {
         _apiService.getSekolah(),
       ]);
 
+      final siswaData = results[1];
+      if (siswaData is List) {
+        siswaData.sort((a, b) {
+          final nameA = (a['nama']?.toString() ?? '').toLowerCase();
+          final nameB = (b['nama']?.toString() ?? '').toLowerCase();
+          return nameA.compareTo(nameB);
+        });
+      }
+
       setState(() {
         _kelasList = results[0].map<String>((e) => e.toString()).toList();
-        _siswaList = results[1];
+        _siswaList = siswaData;
         _sekolahList = results[2];
         _isLoading = false;
       });

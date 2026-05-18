@@ -78,8 +78,12 @@ class _AbsensiWajahScreenState extends State<AbsensiWajahScreen>
       _status = "Mengambil data siswa...";
     });
 
-    // Show student picker first
     final List<dynamic> siswaList = await _apiService.getSiswa();
+    siswaList.sort((a, b) {
+      final nameA = (a['nama']?.toString() ?? '').toLowerCase();
+      final nameB = (b['nama']?.toString() ?? '').toLowerCase();
+      return nameA.compareTo(nameB);
+    });
 
     setState(() {
       _isProcessing = false;
