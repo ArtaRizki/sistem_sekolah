@@ -137,20 +137,33 @@ class _RekapScreenState extends State<RekapScreen> {
                     ],
                   ),
                   // Data
-                  ...List<pw.TableRow>.generate(_rekapData.length, (index) {
-                    final data = _rekapData[index];
-                    return pw.TableRow(
+                  if (_rekapData.isEmpty)
+                    pw.TableRow(
                       children: [
-                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('${index + 1}', textAlign: pw.TextAlign.center)),
-                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(data['nama']?.toString() ?? '-', textAlign: pw.TextAlign.left)),
-                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(data['hadir']?.toString() ?? '0', textAlign: pw.TextAlign.center)),
-                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(data['izin']?.toString() ?? '0', textAlign: pw.TextAlign.center)),
-                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(data['sakit']?.toString() ?? '0', textAlign: pw.TextAlign.center)),
-                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(data['alpa']?.toString() ?? '0', textAlign: pw.TextAlign.center)),
-                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('${data['persen'] ?? 0}%', textAlign: pw.TextAlign.center)),
+                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('-', textAlign: pw.TextAlign.center)),
+                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Data Kosong (Belum dimuat)', style: pw.TextStyle(fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.center)),
+                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('-', textAlign: pw.TextAlign.center)),
+                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('-', textAlign: pw.TextAlign.center)),
+                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('-', textAlign: pw.TextAlign.center)),
+                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('-', textAlign: pw.TextAlign.center)),
+                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('-', textAlign: pw.TextAlign.center)),
                       ],
-                    );
-                  }),
+                    )
+                  else
+                    ...List<pw.TableRow>.generate(_rekapData.length, (index) {
+                      final data = _rekapData[index];
+                      return pw.TableRow(
+                        children: [
+                          pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('${index + 1}', textAlign: pw.TextAlign.center)),
+                          pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(data['nama']?.toString() ?? '-', textAlign: pw.TextAlign.left)),
+                          pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(data['hadir']?.toString() ?? '0', textAlign: pw.TextAlign.center)),
+                          pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(data['izin']?.toString() ?? '0', textAlign: pw.TextAlign.center)),
+                          pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(data['sakit']?.toString() ?? '0', textAlign: pw.TextAlign.center)),
+                          pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(data['alpa']?.toString() ?? '0', textAlign: pw.TextAlign.center)),
+                          pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('${data['persen'] ?? 0}%', textAlign: pw.TextAlign.center)),
+                        ],
+                      );
+                    }),
                 ],
               ),
               pw.SizedBox(height: 48),
