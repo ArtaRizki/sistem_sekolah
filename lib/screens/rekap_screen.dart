@@ -55,6 +55,15 @@ class _RekapScreenState extends State<RekapScreen> {
       final kelasData = results[0];
       final rekapData = results[1];
 
+      // Sort data berdasarkan nama secara alfabetis
+      if (rekapData is List) {
+        rekapData.sort((a, b) {
+          final nameA = (a['nama']?.toString() ?? '').toLowerCase();
+          final nameB = (b['nama']?.toString() ?? '').toLowerCase();
+          return nameA.compareTo(nameB);
+        });
+      }
+
       setState(() {
         _kelasList = ['Semua Kelas', ...kelasData.map((e) => e.toString())];
         if (_selectedKelas == null || !_kelasList.contains(_selectedKelas)) {
