@@ -91,99 +91,94 @@ class _RekapScreenState extends State<RekapScreen> {
     final formattedDate = '${now.day} ${months[now.month]} ${now.year}';
 
     pdf.addPage(
-      pw.Page(
+      pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
-        build: (pw.Context context) {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
+        build: (pw.Context context) => [
+          pw.Text(
+            'Rekapitulasi Kehadiran Bulanan',
+            style: pw.TextStyle(
+              fontSize: 24,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+          pw.SizedBox(height: 12),
+          pw.Text(
+            'Sekolah: ${widget.sekolah ?? "Semua Sekolah"}',
+            style: const pw.TextStyle(fontSize: 16),
+          ),
+          pw.SizedBox(height: 4),
+          pw.Text(
+            'Kelas: ${_selectedKelas ?? "Semua Kelas"}',
+            style: const pw.TextStyle(fontSize: 16),
+          ),
+          pw.SizedBox(height: 4),
+          pw.Text(
+            'Bulan: $_selectedBulan',
+            style: const pw.TextStyle(fontSize: 16),
+          ),
+          pw.SizedBox(height: 24),
+          pw.Table(
+            border: pw.TableBorder.all(color: PdfColors.grey400, width: .5),
             children: [
-              pw.Text(
-                'Rekapitulasi Kehadiran Bulanan',
-                style: pw.TextStyle(
-                  fontSize: 24,
-                  fontWeight: pw.FontWeight.bold,
-                ),
-              ),
-              pw.SizedBox(height: 12),
-              pw.Text(
-                'Sekolah: ${widget.sekolah ?? "Semua Sekolah"}',
-                style: const pw.TextStyle(fontSize: 16),
-              ),
-              pw.SizedBox(height: 4),
-              pw.Text(
-                'Kelas: ${_selectedKelas ?? "Semua Kelas"}',
-                style: const pw.TextStyle(fontSize: 16),
-              ),
-              pw.SizedBox(height: 4),
-              pw.Text(
-                'Bulan: $_selectedBulan',
-                style: const pw.TextStyle(fontSize: 16),
-              ),
-              pw.SizedBox(height: 24),
-              pw.Table(
-                border: pw.TableBorder.all(color: PdfColors.grey400, width: .5),
+              // Header
+              pw.TableRow(
+                decoration: const pw.BoxDecoration(color: PdfColors.blue100),
                 children: [
-                  // Header
-                  pw.TableRow(
-                    decoration: const pw.BoxDecoration(color: PdfColors.blue100),
-                    children: [
-                      pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('No', style: pw.TextStyle(fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.center)),
-                      pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Nama', style: pw.TextStyle(fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.center)),
-                      pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Hadir', style: pw.TextStyle(fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.center)),
-                      pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Izin', style: pw.TextStyle(fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.center)),
-                      pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Sakit', style: pw.TextStyle(fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.center)),
-                      pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Alpa', style: pw.TextStyle(fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.center)),
-                      pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Kehadiran (%)', style: pw.TextStyle(fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.center)),
-                    ],
-                  ),
-                  // Data
-                  if (_rekapData.isEmpty)
-                    pw.TableRow(
-                      children: [
-                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('-', textAlign: pw.TextAlign.center)),
-                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Data Kosong (Belum dimuat)', style: pw.TextStyle(fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.center)),
-                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('-', textAlign: pw.TextAlign.center)),
-                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('-', textAlign: pw.TextAlign.center)),
-                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('-', textAlign: pw.TextAlign.center)),
-                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('-', textAlign: pw.TextAlign.center)),
-                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('-', textAlign: pw.TextAlign.center)),
-                      ],
-                    )
-                  else
-                    ...List<pw.TableRow>.generate(_rekapData.length, (index) {
-                      final data = _rekapData[index];
-                      return pw.TableRow(
-                        children: [
-                          pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('${index + 1}', textAlign: pw.TextAlign.center)),
-                          pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(data['nama']?.toString() ?? '-', textAlign: pw.TextAlign.left)),
-                          pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(data['hadir']?.toString() ?? '0', textAlign: pw.TextAlign.center)),
-                          pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(data['izin']?.toString() ?? '0', textAlign: pw.TextAlign.center)),
-                          pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(data['sakit']?.toString() ?? '0', textAlign: pw.TextAlign.center)),
-                          pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(data['alpa']?.toString() ?? '0', textAlign: pw.TextAlign.center)),
-                          pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('${data['persen'] ?? 0}%', textAlign: pw.TextAlign.center)),
-                        ],
-                      );
-                    }),
+                  pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('No', style: pw.TextStyle(fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.center)),
+                  pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Nama', style: pw.TextStyle(fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.center)),
+                  pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Hadir', style: pw.TextStyle(fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.center)),
+                  pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Izin', style: pw.TextStyle(fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.center)),
+                  pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Sakit', style: pw.TextStyle(fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.center)),
+                  pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Alpa', style: pw.TextStyle(fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.center)),
+                  pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Kehadiran (%)', style: pw.TextStyle(fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.center)),
                 ],
               ),
-              pw.SizedBox(height: 48),
-              pw.Align(
-                alignment: pw.Alignment.centerRight,
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.center,
+              // Data
+              if (_rekapData.isEmpty)
+                pw.TableRow(
                   children: [
-                    pw.Text('Purwakarta, $formattedDate'),
-                    pw.SizedBox(height: 40),
-                    pw.Text(
-                      'Dheri Rama Permadhi, S.Pd',
-                      style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                    ),
+                    pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('-', textAlign: pw.TextAlign.center)),
+                    pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Data Kosong (Belum dimuat)', style: pw.TextStyle(fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.center)),
+                    pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('-', textAlign: pw.TextAlign.center)),
+                    pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('-', textAlign: pw.TextAlign.center)),
+                    pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('-', textAlign: pw.TextAlign.center)),
+                    pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('-', textAlign: pw.TextAlign.center)),
+                    pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('-', textAlign: pw.TextAlign.center)),
                   ],
-                ),
-              ),
+                )
+              else
+                ...List<pw.TableRow>.generate(_rekapData.length, (index) {
+                  final data = _rekapData[index];
+                  return pw.TableRow(
+                    children: [
+                      pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('${index + 1}', textAlign: pw.TextAlign.center)),
+                      pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(data['nama']?.toString() ?? '-', textAlign: pw.TextAlign.left)),
+                      pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(data['hadir']?.toString() ?? '0', textAlign: pw.TextAlign.center)),
+                      pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(data['izin']?.toString() ?? '0', textAlign: pw.TextAlign.center)),
+                      pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(data['sakit']?.toString() ?? '0', textAlign: pw.TextAlign.center)),
+                      pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(data['alpa']?.toString() ?? '0', textAlign: pw.TextAlign.center)),
+                      pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('${data['persen'] ?? 0}%', textAlign: pw.TextAlign.center)),
+                    ],
+                  );
+                }),
             ],
-          );
-        },
+          ),
+          pw.SizedBox(height: 48),
+          pw.Align(
+            alignment: pw.Alignment.centerRight,
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.center,
+              children: [
+                pw.Text('Purwakarta, $formattedDate'),
+                pw.SizedBox(height: 40),
+                pw.Text(
+                  'Dheri Rama Permadhi, S.Pd',
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
 
