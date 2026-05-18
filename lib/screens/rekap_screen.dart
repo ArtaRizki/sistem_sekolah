@@ -120,39 +120,38 @@ class _RekapScreenState extends State<RekapScreen> {
                 style: const pw.TextStyle(fontSize: 16),
               ),
               pw.SizedBox(height: 24),
-              pw.TableHelper.fromTextArray(
-                context: context,
-                headers: [
-                  'No',
-                  'Nama',
-                  'Hadir',
-                  'Izin',
-                  'Sakit',
-                  'Alpa',
-                  'Kehadiran (%)',
-                ],
-                data: List<List<String>>.generate(_rekapData.length, (index) {
-                  final data = _rekapData[index];
-                  return [
-                    '${index + 1}',
-                    data['nama'].toString(),
-                    '${data['hadir']}',
-                    '${data['izin']}',
-                    '${data['sakit']}',
-                    '${data['alpa']}',
-                    '${data['persen']}%',
-                  ];
-                }),
-                headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                headerDecoration: const pw.BoxDecoration(
-                  color: PdfColors.blue100,
-                ),
-                rowDecoration: const pw.BoxDecoration(
-                  border: pw.Border(
-                    bottom: pw.BorderSide(color: PdfColors.grey400, width: .5),
+              pw.Table(
+                border: pw.TableBorder.all(color: PdfColors.grey400, width: .5),
+                children: [
+                  // Header
+                  pw.TableRow(
+                    decoration: const pw.BoxDecoration(color: PdfColors.blue100),
+                    children: [
+                      pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('No', style: pw.TextStyle(fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.center)),
+                      pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Nama', style: pw.TextStyle(fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.center)),
+                      pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Hadir', style: pw.TextStyle(fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.center)),
+                      pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Izin', style: pw.TextStyle(fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.center)),
+                      pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Sakit', style: pw.TextStyle(fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.center)),
+                      pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Alpa', style: pw.TextStyle(fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.center)),
+                      pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Kehadiran (%)', style: pw.TextStyle(fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.center)),
+                    ],
                   ),
-                ),
-                cellAlignment: pw.Alignment.center,
+                  // Data
+                  ...List<pw.TableRow>.generate(_rekapData.length, (index) {
+                    final data = _rekapData[index];
+                    return pw.TableRow(
+                      children: [
+                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('${index + 1}', textAlign: pw.TextAlign.center)),
+                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(data['nama']?.toString() ?? '-', textAlign: pw.TextAlign.left)),
+                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(data['hadir']?.toString() ?? '0', textAlign: pw.TextAlign.center)),
+                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(data['izin']?.toString() ?? '0', textAlign: pw.TextAlign.center)),
+                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(data['sakit']?.toString() ?? '0', textAlign: pw.TextAlign.center)),
+                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(data['alpa']?.toString() ?? '0', textAlign: pw.TextAlign.center)),
+                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('${data['persen'] ?? 0}%', textAlign: pw.TextAlign.center)),
+                      ],
+                    );
+                  }),
+                ],
               ),
               pw.SizedBox(height: 48),
               pw.Align(
