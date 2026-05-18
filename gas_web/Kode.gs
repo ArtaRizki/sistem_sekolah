@@ -642,55 +642,57 @@ function getRekapData(bulan, sekolah, kelas) {
   var sheet = getSheet("Absensi");
   var values = sheet.getDataRange().getValues();
   var rekap = {};
-  
   var bulanNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni",
                     "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
                     
-  // Jika filter kelas aktif, ambil mapping Nama -> Kelas dari sheet Siswa
-  var mapSiswaKelas = {};
-  if (kelas) {
-    var sheetSiswa = getSheet("Siswa");
-    var valuesSiswa = sheetSiswa.getDataRange().getValues();
-    for (var j = 1; j < valuesSiswa.length; j++) {
-       var namaSiswa = valuesSiswa[j][0];
-       var kelasSiswa = valuesSiswa[j][3];
-       mapSiswaKelas[namaSiswa] = kelasSiswa;
-    }
+  // Inisialisasi data rekap dengan semua siswa yang sesuai filter
+  // Agar siswa yang belum absen tetap muncul dengan angka 0
+  var sheetSiswa = getSheet("Siswa");
+  var valuesSiswa = sheetSiswa.getDataRange().getValues();
+  for (var j = 1; j < valuesSiswa.length; j++) {
+    var namaSiswa = valuesSiswa[j][0] ? valuesSiswa[j][0].toString().trim() : "";
+    var kelasSiswa = valuesSiswa[j][3] ? valuesSiswa[j][3].toString().trim() : "";
+    var sekolahSiswa = valuesSiswa[j][4] ? valuesSiswa[j][4].toString().trim() : "";
+    
+    if (!namaSiswa) continue;
+    if (sekolah && sekolahSiswa !== sekolah.trim()) continue;
+    if (kelas && kelasSiswa !== kelas.trim()) continue;
+    
+    rekap[namaSiswa] = { 
+      nama: namaSiswa, 
+      hadir: 0, 
+      izin: 0, 
+      sakit: 0, 
+      alpa: 0, 
+      total: 0, 
+      sekolah: sekolahSiswa, 
+      kelas: kelasSiswa 
+    };
   }
   
   for (var i = 1; i < values.length; i++) {
     var tanggalRaw = values[i][0];
-    var nama = values[i][1];
+    var nama = values[i][1] ? values[i][1].toString().trim() : "";
     var status = values[i][2];
-    var absenSekolah = values[i][5] || "";
     
-    if (sekolah && absenSekolah.toString() !== sekolah) continue;
+    // Hanya hitung jika siswa ada di daftar rekap (sesuai filter)
+    if (!rekap[nama]) continue;
     
-    if (kelas) {
-       var kls = mapSiswaKelas[nama] || "";
-       if (kls.toString() !== kelas) continue;
+    // Parse tanggal
+    try {
+      var dt = new Date(tanggalRaw);
+      var bulanTahun = bulanNames[dt.getMonth()] + " " + dt.getFullYear();
+      if (bulanTahun !== bulan) continue;
+    } catch(e) {
+      continue;
     }
     
-    // Parse the date and convert to "Mei 2026" format for comparison
-    if (bulan) {
-      try {
-        var dt = new Date(tanggalRaw);
-        var bulanTahun = bulanNames[dt.getMonth()] + " " + dt.getFullYear();
-        if (bulanTahun !== bulan) continue;
-      } catch(e) {
-        continue;
-      }
-    }
-    
-    var klsSiswa = (mapSiswaKelas && mapSiswaKelas[nama]) ? mapSiswaKelas[nama] : "";
-    
-    if (!rekap[nama]) rekap[nama] = { nama: nama, hadir: 0, izin: 0, sakit: 0, alpa: 0, total: 0, sekolah: absenSekolah, kelas: klsSiswa };
     rekap[nama].total++;
     
     if (status === "Hadir") rekap[nama].hadir++;
     else if (status === "Izin") rekap[nama].izin++;
     else if (status === "Sakit") rekap[nama].sakit++;
-    else rekap[nama].alpa++;
+    else if (status === "Alpa") rekap[nama].alpa++;
   }
   
   var result = [];
